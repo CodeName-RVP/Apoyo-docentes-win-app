@@ -1,0 +1,73 @@
+<UserControl x:Class="AppParaUniversidad.Views.LoadsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Background="{DynamicResource CardBrush}" Padding="10" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1">
+            <WrapPanel VerticalAlignment="Center">
+                <Button Content="Abrir Excel" Command="{Binding OpenFileCommand}" />
+                <ComboBox ItemsSource="{Binding SheetNames}"
+                          SelectedItem="{Binding SelectedSheet}"
+                          Width="220"
+                          Margin="8,0,0,0" />
+                <Button Content="Analizar hoja" Command="{Binding AnalyzeCommand}" Margin="8,0,0,0" />
+                <Button Content="Agrupar por docente" Command="{Binding GroupCommand}" Margin="8,0,0,0" />
+            </WrapPanel>
+        </Border>
+
+        <TextBlock Grid.Row="1"
+                   Text="{Binding Status}"
+                   Margin="0,8,0,6"
+                   FontWeight="SemiBold" />
+
+        <Border Grid.Row="2" Background="{DynamicResource CardBrush}" Padding="6" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1">
+            <DataGrid ItemsSource="{Binding CurrentRows}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding DocenteOriginal}" Header="Docente" />
+                    <DataGridTextColumn Binding="{Binding Asignatura}" Header="Asignatura" />
+                    <DataGridTextColumn Binding="{Binding Grupo}" Header="Grupo" />
+                    <DataGridTextColumn Binding="{Binding Horas}" Header="Horas" />
+                    <DataGridTextColumn Binding="{Binding Salon}" Header="Salon" />
+                    <DataGridTextColumn Binding="{Binding Lu}" Header="Lu" />
+                    <DataGridTextColumn Binding="{Binding Ma}" Header="Ma" />
+                    <DataGridTextColumn Binding="{Binding Mi}" Header="Mi" />
+                    <DataGridTextColumn Binding="{Binding Ju}" Header="Ju" />
+                    <DataGridTextColumn Binding="{Binding Vi}" Header="Vi" />
+                    <DataGridTextColumn Binding="{Binding Tipo}" Header="Tipo" />
+                    <DataGridTextColumn Binding="{Binding Comision}" Header="Comision" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <Border Grid.Row="3" Background="{DynamicResource CardBrush}" Padding="6" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1" Margin="0,6,0,0">
+            <DataGrid ItemsSource="{Binding GroupedLoads}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding NombreVisible}" Header="Docente" />
+                    <DataGridTextColumn Binding="{Binding TotalHoras}" Header="Total horas" />
+                    <DataGridTextColumn Binding="{Binding Items.Count}" Header="Asignaturas" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <ItemsControl Grid.Row="4" ItemsSource="{Binding Warnings}" Margin="0,6,0,0">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6" Padding="6" Margin="0,2,0,2">
+                        <TextBlock Foreground="#B91C1C" Text="{Binding}" />
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
+</UserControl>

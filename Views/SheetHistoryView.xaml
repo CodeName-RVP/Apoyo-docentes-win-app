@@ -1,0 +1,84 @@
+<UserControl x:Class="AppParaUniversidad.Views.SheetHistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Background="{DynamicResource CardBrush}" Padding="10" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Historial de Sheets" FontWeight="SemiBold" />
+                    <TextBlock Text="Edita el alias de los IDs guardados o importa/exporta." FontSize="11" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Importar" Command="{Binding ImportSheetIdsCommand}" />
+                    <Button Content="Exportar" Command="{Binding ExportSheetIdsCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Background="{DynamicResource CardBrush}" Padding="10" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1" Margin="0,0,8,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding SheetHistory}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource WindowBackgroundBrush}" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding SheetId}" FontSize="11" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="Eliminar" Command="{Binding DataContext.DeleteSheetIdItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Margin="8,0,0,0" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Background="{DynamicResource CardBrush}"
+                    Padding="10"
+                    CornerRadius="8"
+                    BorderBrush="{DynamicResource BorderBrushLight}"
+                    BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Editar alias" FontWeight="SemiBold" />
+                    <TextBlock Text="Selecciona un ID y cambia el nombre." FontSize="11" Margin="0,4,0,6" />
+                    <ComboBox ItemsSource="{Binding SheetHistory}"
+                              SelectedItem="{Binding SelectedSheetHistory}"
+                              DisplayMemberPath="Name"
+                              TextSearch.TextPath="Name"
+                              IsEditable="True"
+                              IsReadOnly="True"
+                              Text="{Binding SelectedSheetHistory.Name}"
+                              Margin="0,0,0,8" />
+                    <TextBox Text="{Binding SheetAliasEdit, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Guardar alias" Command="{Binding SaveAliasCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
+
+

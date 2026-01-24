@@ -1,0 +1,76 @@
+<UserControl x:Class="AppParaUniversidad.Views.DirectoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Background="{DynamicResource CardBrush}" Padding="10" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Text="Nombre visible" />
+                        <TextBox Text="{Binding NombreVisible, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                        <TextBlock Text="Correo" />
+                        <TextBox Text="{Binding Correo, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                        <TextBlock Text="Telefono (opcional)" />
+                        <TextBox Text="{Binding Telefono, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3" VerticalAlignment="Center">
+                        <TextBlock Text="Ultima actualizacion" />
+                        <TextBlock Text="{Binding LastUpdated}" FontSize="11" />
+                    </StackPanel>
+                </Grid>
+
+                <WrapPanel Margin="0,8,0,0" HorizontalAlignment="Left">
+                    <Button Content="Nuevo" Command="{Binding NewCommand}" />
+                    <Button Content="Guardar" Command="{Binding SaveCommand}" />
+                    <Button Content="Eliminar" Command="{Binding DeleteCommand}" />
+                    <Button Content="Refrescar" Command="{Binding RefreshCommand}" />
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="1" Text="{Binding Status}" FontWeight="SemiBold" Margin="0,8,0,6" />
+
+        <Border Grid.Row="2" Background="{DynamicResource CardBrush}" Padding="6" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1">
+            <DataGrid ItemsSource="{Binding Contacts}"
+                      SelectedItem="{Binding Selected}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="False">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Binding="{Binding SelectedForDelete}" Width="40">
+    <DataGridCheckBoxColumn.Header>
+        <CheckBox IsChecked="{Binding DataContext.SelectAll, RelativeSource={RelativeSource AncestorType=DataGrid}, Mode=TwoWay}" HorizontalAlignment="Center" />
+    </DataGridCheckBoxColumn.Header>
+</DataGridCheckBoxColumn>
+                    <DataGridTextColumn Binding="{Binding NombreVisible}" Header="Nombre" IsReadOnly="True" />
+                    <DataGridTextColumn Binding="{Binding Correo}" Header="Correo" IsReadOnly="True" />
+                    <DataGridTextColumn Binding="{Binding Telefono}" Header="Telefono" IsReadOnly="True" />
+                    <DataGridTextColumn Binding="{Binding LastUpdatedUtc}" Header="Ultima actualizacion" IsReadOnly="True" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>
+
+
+
+

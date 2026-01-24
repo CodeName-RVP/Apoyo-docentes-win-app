@@ -1,0 +1,61 @@
+<Window x:Class="AppParaUniversidad.TeacherSchedulesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:views="clr-namespace:AppParaUniversidad.Views"
+        Title="Horarios Docente" Height="780" Width="1200" MinHeight="650" MinWidth="1000"
+        WindowStyle="None" ResizeMode="CanResize" Background="{DynamicResource WindowBackgroundBrush}">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0" />
+    </shell:WindowChrome.WindowChrome>
+    <Border BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}" MouseLeftButtonDown="OnTitleBarMouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Horarios Docente" Margin="10,0,0,0" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Horarios Docente" Margin="0,2,8,2" Padding="14,4" Click="OnSchedulesClick" />
+                    <Button Content="Historial Sheets" Margin="0,2,8,2" Padding="14,4" Click="OnSheetHistoryClick" />
+                    <Button Content="Configuracion" Margin="0,2,8,2" Padding="14,4" Click="OnSettingsClick" />
+                    <Button Style="{StaticResource TitleBarButtonStyle}" Content="{DynamicResource IconMinimize}" Width="40" Click="OnMinimizeClick" />
+                    <Button Style="{StaticResource TitleBarMaximizeButtonStyle}" Width="40" Click="OnMaximizeClick" />
+                    <Button Style="{StaticResource TitleBarCloseButtonStyle}" Content="{DynamicResource IconClose}" Width="40" Click="OnCloseClick" />
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Border x:Name="SchedulesPanel"
+                        Background="{DynamicResource WindowBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrushLight}"
+                        BorderThickness="0">
+                    <views:SchedulesView x:Name="SchedulesViewControl" />
+                </Border>
+                <Border x:Name="SettingsPanel"
+                        Background="{DynamicResource WindowBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrushLight}"
+                        BorderThickness="0"
+                        Visibility="Collapsed">
+                    <views:SettingsView x:Name="SettingsViewControl" />
+                </Border>
+                <Border x:Name="SheetHistoryPanel"
+                        Background="{DynamicResource WindowBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrushLight}"
+                        BorderThickness="0"
+                        Visibility="Collapsed">
+                    <views:SheetHistoryView x:Name="SheetHistoryViewControl" />
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
+
+
+
