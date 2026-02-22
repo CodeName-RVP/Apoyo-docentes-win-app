@@ -1,0 +1,12 @@
+DESCARGA PARA USUARIO FINAL
+
+Archivo recomendado:
+- ApoyoDocentes-v1.0.0-win-x64.zip
+
+Pasos:
+1) Descargar el .zip
+2) Descomprimir en cualquier carpeta
+3) Ejecutar ApoyoDocentes.exe
+
+Nota:
+- Esta version ya incluye runtime (.NET) para Windows x64.

@@ -13,9 +13,16 @@ public partial class StartMenuWindow : Window
     private readonly AppSettings _settings;
     private readonly GitHubUpdateService _updateService = new();
 
+    public string AppVersionText { get; }
+
     public StartMenuWindow()
     {
         InitializeComponent();
+        DataContext = this;
+
+        var version = GetType().Assembly.GetName().Version;
+        AppVersionText = $"Version {version?.ToString(3) ?? "1.0.0"}";
+
         _settingsService = new AppSettingsService();
         _settings = _settingsService.Load();
         ThemeManager.ApplyTheme(_settings.DarkTheme);

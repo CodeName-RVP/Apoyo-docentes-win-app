@@ -50,7 +50,7 @@
                         Padding="20,10"
                         Click="OnOptionsClick" />
 
-                <TextBlock Text="Version 1.0"
+                <TextBlock Text="{Binding AppVersionText}"
                            Foreground="#9CA3AF"
                            HorizontalAlignment="Left"
                            VerticalAlignment="Bottom"
@@ -60,3 +60,4 @@
         </Grid>
     </Border>
 </Window>
+

@@ -19,4 +19,5 @@ app.db
 
 # Shortcuts
 *.lnk
+artifacts/
 

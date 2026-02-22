@@ -56,3 +56,13 @@ En el proyecto:
 Coloca tus capturas en `docs/images/` y referencialas asi:
 
 ![Pantalla principal](docs/images/pantalla-principal.png)
+
+## DESCARGA RAPIDA (USUARIO FINAL)
+Para usuarios no tecnicos, usa el paquete listo en:
+- `DESCARGA_AQUI/ApoyoDocentes-v1.0.0-win-x64.zip`
+
+Pasos:
+1. Descargar ese `.zip`.
+2. Descomprimirlo.
+3. Ejecutar `ApoyoDocentes.exe`.
+
