@@ -1,12 +1,12 @@
 DESCARGA PARA USUARIO FINAL
 
-Archivo recomendado:
+Este repositorio ya no guarda binarios grandes en el arbol principal.
+
+Usa la seccion Releases de GitHub para descargar:
 - ApoyoDocentes-v1.0.0-win-x64.zip
 
 Pasos:
-1) Descargar el .zip
-2) Descomprimir en cualquier carpeta
-3) Ejecutar ApoyoDocentes.exe
-
-Nota:
-- Esta version ya incluye runtime (.NET) para Windows x64.
+1) Ir a Releases
+2) Descargar el .zip
+3) Descomprimir
+4) Ejecutar ApoyoDocentes.exe

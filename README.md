@@ -59,10 +59,11 @@ Coloca tus capturas en `docs/images/` y referencialas asi:
 
 ## DESCARGA RAPIDA (USUARIO FINAL)
 Para usuarios no tecnicos, usa el paquete listo en:
-- `DESCARGA_AQUI/ApoyoDocentes-v1.0.0-win-x64.zip`
+- `Releases` del repositorio (asset recomendado: `ApoyoDocentes-v1.0.0-win-x64.zip`)
 
 Pasos:
-1. Descargar ese `.zip`.
+1. Abrir la seccion `Releases` del repositorio y descargar el `.zip`. 
 2. Descomprimirlo.
 3. Ejecutar `ApoyoDocentes.exe`.
+
 
