@@ -5,7 +5,11 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ApoyoDocentes</AssemblyName>
+    <Product>Apoyo Docentes</Product>
+    <Version>1.0.0</Version>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.4" />
@@ -15,10 +19,12 @@
     <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     <PackageReference Include="MimeKit" Version="4.7.1" />
   </ItemGroup>
+
   <ItemGroup>
     <Resource Include="Assets\Icons\*.svg" />
   </ItemGroup>
+
+  <Target Name="CreateProjectShortcut" AfterTargets="Build">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('$(ProjectDir)Apoyo Docentes.lnk'); $s.TargetPath = '$(TargetDir)$(AssemblyName).exe'; $s.WorkingDirectory = '$(TargetDir)'; $s.IconLocation = '$(TargetDir)$(AssemblyName).exe,0'; $s.Save()&quot;" />
+  </Target>
 </Project>
-
-
-

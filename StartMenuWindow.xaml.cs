@@ -1,7 +1,9 @@
+using System;
 using System.Windows;
 using System.Windows.Input;
 using AppParaUniversidad.Common;
 using AppParaUniversidad.Services.Settings;
+using AppParaUniversidad.Services.Updates;
 
 namespace AppParaUniversidad;
 
@@ -9,6 +11,7 @@ public partial class StartMenuWindow : Window
 {
     private readonly AppSettingsService _settingsService;
     private readonly AppSettings _settings;
+    private readonly GitHubUpdateService _updateService = new();
 
     public StartMenuWindow()
     {
@@ -17,6 +20,35 @@ public partial class StartMenuWindow : Window
         _settings = _settingsService.Load();
         ThemeManager.ApplyTheme(_settings.DarkTheme);
         ApplyWindowSize(_settings.WindowWidth, _settings.WindowHeight);
+        _ = CheckUpdatesAtStartupAsync();
+    }
+
+    private async System.Threading.Tasks.Task CheckUpdatesAtStartupAsync()
+    {
+        try
+        {
+            var currentVersion = GetType().Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var latest = await _updateService.GetLatestReleaseAsync();
+            if (latest is null || string.IsNullOrWhiteSpace(latest.TagName))
+            {
+                UpdateCheckState.HasChecked = true;
+                UpdateCheckState.UpdateAvailable = true;
+                UpdateCheckState.StatusText = "Actualizacion disponible";
+                return;
+            }
+
+            var hasUpdate = GitHubUpdateService.IsRemoteNewer(currentVersion, latest.TagName);
+            UpdateCheckState.HasChecked = true;
+            UpdateCheckState.UpdateAvailable = hasUpdate;
+            UpdateCheckState.StatusText = hasUpdate ? "Actualizacion disponible" : "Actualizado";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(nameof(CheckUpdatesAtStartupAsync), ex);
+            UpdateCheckState.HasChecked = true;
+            UpdateCheckState.UpdateAvailable = true;
+            UpdateCheckState.StatusText = "Actualizacion disponible";
+        }
     }
 
     private void ApplyWindowSize(double width, double height)
@@ -35,7 +67,7 @@ public partial class StartMenuWindow : Window
         window.Show();
     }
 
-        private void OnOpenTeacherSchedulesClick(object sender, RoutedEventArgs e)
+    private void OnOpenTeacherSchedulesClick(object sender, RoutedEventArgs e)
     {
         var window = new TeacherSchedulesWindow
         {
@@ -82,4 +114,3 @@ public partial class StartMenuWindow : Window
         WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     }
 }
-

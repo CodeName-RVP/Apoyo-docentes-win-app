@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:views="clr-namespace:AppParaUniversidad.Views"
-        Title="Horarios Docente" Height="780" Width="1200" MinHeight="650" MinWidth="1000"
+        Title="Apoyo Docentes - Horarios Docente" Height="780" Width="1200" MinHeight="650" MinWidth="1000"
         WindowStyle="None" ResizeMode="CanResize" Background="{DynamicResource WindowBackgroundBrush}">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0" />
@@ -56,6 +56,7 @@
         </Grid>
     </Border>
 </Window>
+
 
 
 

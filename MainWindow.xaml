@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:AppParaUniversidad.Views"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-        Title="Cargas Docentes" Height="780" Width="1200" MinHeight="650" MinWidth="1000"
+        Title="Apoyo Docentes" Height="780" Width="1200" MinHeight="650" MinWidth="1000"
         WindowStyle="None" ResizeMode="CanResize" Background="{DynamicResource WindowBackgroundBrush}">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" CornerRadius="0" GlassFrameThickness="0" />
@@ -22,7 +22,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Cargas Docentes" Margin="10,0,0,0" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <TabControl x:Name="MainTabs" TabStripPlacement="Top" Background="Transparent" BorderThickness="0">
+                    <TabControl x:Name="MainTabs" TabStripPlacement="Top" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="0,2,6,2">
                         <TabControl.Template>
                             <ControlTemplate TargetType="TabControl">
                                 <TabPanel IsItemsHost="True" Background="Transparent" />
@@ -34,8 +34,8 @@
                                 <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
-                                <Setter Property="Padding" Value="18,6" />
-                                <Setter Property="Margin" Value="0,2,10,2" />
+                                <Setter Property="Padding" Value="14,4" />
+                                <Setter Property="Margin" Value="0,2,8,2" />
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="TabItem">
@@ -93,6 +93,8 @@
         </Grid>
     </Border>
 </Window>
+
+
 
 
 

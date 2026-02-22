@@ -16,3 +16,7 @@ obj/
 
 # SQLite / local data (optional)
 app.db
+
+# Shortcuts
+*.lnk
+

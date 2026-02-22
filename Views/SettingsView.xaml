@@ -6,6 +6,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -53,5 +54,25 @@
                 <Button Content="Aplicar tema" Command="{Binding ToggleThemeCommand}" Margin="8,0,0,0" />
             </StackPanel>
         </Border>
+
+        <Border Grid.Row="3" Background="{DynamicResource CardBrush}" Padding="10" CornerRadius="8" BorderBrush="{DynamicResource BorderBrushLight}" BorderThickness="1" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="{Binding UpdateButtonText}" Command="{Binding CheckUpdatesCommand}" IsEnabled="{Binding UpdateButtonEnabled}" />
+                <TextBlock Text="{Binding UpdateStatusText}" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding UpdateAvailable}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>
+
+
