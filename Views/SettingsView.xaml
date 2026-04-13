@@ -1,4 +1,4 @@
-<UserControl x:Class="AppParaUniversidad.Views.SettingsView"
+﻿<UserControl x:Class="AppParaUniversidad.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Margin="12">
@@ -61,11 +61,18 @@
                 <TextBlock Text="{Binding UpdateStatusText}" FontWeight="SemiBold" Margin="8,0,0,0" VerticalAlignment="Center">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
-                            <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding UpdateAvailable}" Value="True">
                                     <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
                                 </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding UpdateCheckSucceeded}" Value="True" />
+                                        <Condition Binding="{Binding UpdateAvailable}" Value="False" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+                                </MultiDataTrigger>
                             </Style.Triggers>
                         </Style>
                     </TextBlock.Style>
@@ -74,5 +81,3 @@
         </Border>
     </Grid>
 </UserControl>
-
-

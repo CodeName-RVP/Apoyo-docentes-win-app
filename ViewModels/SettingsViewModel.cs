@@ -1,9 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -26,6 +24,7 @@ public class SettingsViewModel : INotifyPropertyChanged
     private WindowSizePreset? _selectedWindowSize;
     private string _updateStatusText = "Verificando...";
     private bool _updateAvailable;
+    private bool _updateCheckSucceeded;
     private bool _isUpdating;
     private GitHubUpdateInfo? _latestRelease;
 
@@ -94,6 +93,19 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
+    public bool UpdateCheckSucceeded
+    {
+        get => _updateCheckSucceeded;
+        private set
+        {
+            if (_updateCheckSucceeded != value)
+            {
+                _updateCheckSucceeded = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public string UpdateButtonText => UpdateAvailable ? "Actualizar ahora" : "Buscar actualizaciones";
 
     public bool UpdateButtonEnabled => !_isUpdating;
@@ -138,8 +150,10 @@ public class SettingsViewModel : INotifyPropertyChanged
 
         if (UpdateCheckState.HasChecked)
         {
+            UpdateCheckSucceeded = UpdateCheckState.CheckSucceeded;
             UpdateAvailable = UpdateCheckState.UpdateAvailable;
             UpdateStatusText = UpdateCheckState.StatusText;
+            _latestRelease = UpdateCheckState.Release;
         }
         else
         {
@@ -174,9 +188,9 @@ public class SettingsViewModel : INotifyPropertyChanged
             return;
         }
 
-        if (UpdateAvailable)
+        if (UpdateAvailable && _latestRelease is not null)
         {
-            await DownloadAndApplyUpdateAsync();
+            await ApplyUpdateFromReleaseAsync(_latestRelease);
             return;
         }
 
@@ -190,20 +204,17 @@ public class SettingsViewModel : INotifyPropertyChanged
         try
         {
             var currentVersion = typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
-            _latestRelease = await _updateService.GetLatestReleaseAsync();
-            if (_latestRelease is null || string.IsNullOrWhiteSpace(_latestRelease.TagName))
-            {
-                SetUpdateState(true, "Actualizacion disponible");
-                return;
-            }
-
-            var hasUpdate = GitHubUpdateService.IsRemoteNewer(currentVersion, _latestRelease.TagName);
-            SetUpdateState(hasUpdate, hasUpdate ? "Actualizacion disponible" : "Actualizado");
+            var result = await _updateService.CheckForUpdatesAsync(currentVersion);
+            ApplyUpdateState(result);
         }
         catch (Exception ex)
         {
             Logger.LogError(nameof(CheckForUpdatesAsync), ex);
-            SetUpdateState(true, "Actualizacion disponible");
+            ApplyUpdateState(new UpdateCheckResult
+            {
+                IsSuccessful = false,
+                StatusText = "No se pudo verificar"
+            });
         }
         finally
         {
@@ -211,96 +222,70 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task DownloadAndApplyUpdateAsync()
+    private async Task ApplyUpdateFromReleaseAsync(GitHubUpdateInfo release)
     {
         SetUpdating(true);
 
         try
         {
-            var release = _latestRelease ?? await _updateService.GetLatestReleaseAsync();
-            if (release is null)
-            {
-                MessageBox.Show("No se pudo obtener la informacion de la actualizacion.", "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(release.AssetDownloadUrl))
-            {
-                MessageBox.Show("No hay archivo de actualizacion en el release. Se abrira GitHub para actualizar manualmente.", "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Information);
-                OpenUrl(release.HtmlUrl);
-                return;
-            }
-
             UpdateStatusText = "Descargando actualizacion...";
+            var result = await _updateService.ApplyUpdateAsync(release);
 
-            var tempRoot = Path.Combine(Path.GetTempPath(), "ApoyoDocentesUpdater", Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(tempRoot);
-            var assetName = string.IsNullOrWhiteSpace(release.AssetName) ? "update.bin" : release.AssetName;
-            var assetPath = Path.Combine(tempRoot, assetName);
-
-            await _updateService.DownloadFileAsync(release.AssetDownloadUrl, assetPath);
-
-            var extension = Path.GetExtension(assetPath).ToLowerInvariant();
-            if (extension == ".msi" || extension == ".exe")
+            if (result.RequiresShutdown)
             {
-                Process.Start(new ProcessStartInfo
+                Application.Current.Shutdown();
+                return;
+            }
+
+            if (result.OpenReleasePage)
+            {
+                if (!string.IsNullOrWhiteSpace(release.HtmlUrl))
                 {
-                    FileName = assetPath,
-                    UseShellExecute = true
+                    OpenUrl(release.HtmlUrl);
+                }
+
+                MessageBox.Show(result.Message, "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Information);
+                ApplyUpdateState(new UpdateCheckResult
+                {
+                    IsSuccessful = true,
+                    UpdateAvailable = true,
+                    StatusText = $"Actualizacion disponible ({GitHubUpdateService.NormalizeTag(release.TagName)})",
+                    Release = release
                 });
-
-                UpdateStatusText = "Instalador descargado";
                 return;
             }
 
-            if (extension != ".zip")
+            if (!result.Started)
             {
-                MessageBox.Show("Formato de actualizacion no soportado automaticamente. Se abrira GitHub.", "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Information);
-                OpenUrl(release.HtmlUrl);
+                MessageBox.Show(result.Message, "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ApplyUpdateState(new UpdateCheckResult
+                {
+                    IsSuccessful = true,
+                    UpdateAvailable = true,
+                    StatusText = $"Actualizacion disponible ({GitHubUpdateService.NormalizeTag(release.TagName)})",
+                    Release = release
+                });
                 return;
             }
 
-            var currentExe = Process.GetCurrentProcess().MainModule?.FileName;
-            if (string.IsNullOrWhiteSpace(currentExe))
+            MessageBox.Show(result.Message, "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Information);
+            ApplyUpdateState(new UpdateCheckResult
             {
-                MessageBox.Show("No se pudo detectar el ejecutable actual.", "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var appDir = Path.GetDirectoryName(currentExe);
-            if (string.IsNullOrWhiteSpace(appDir))
-            {
-                MessageBox.Show("No se pudo detectar la carpeta de la aplicacion.", "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var exeName = Path.GetFileName(currentExe);
-            var extractDir = Path.Combine(tempRoot, "extract");
-            ZipFile.ExtractToDirectory(assetPath, extractDir, true);
-
-            var updaterScript = Path.Combine(tempRoot, "apply-update.cmd");
-            var script = $"@echo off{Environment.NewLine}" +
-                         $"ping 127.0.0.1 -n 3 > nul{Environment.NewLine}" +
-                         $"robocopy \"{extractDir}\" \"{appDir}\" /E /R:2 /W:1 > nul{Environment.NewLine}" +
-                         $"start \"\" \"{Path.Combine(appDir, exeName)}\"{Environment.NewLine}";
-
-            File.WriteAllText(updaterScript, script);
-
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = updaterScript,
-                UseShellExecute = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
-                CreateNoWindow = true
+                IsSuccessful = true,
+                UpdateAvailable = true,
+                StatusText = $"Actualizacion disponible ({GitHubUpdateService.NormalizeTag(release.TagName)})",
+                Release = release
             });
-
-            Application.Current.Shutdown();
         }
         catch (Exception ex)
         {
-            Logger.LogError(nameof(DownloadAndApplyUpdateAsync), ex);
+            Logger.LogError(nameof(ApplyUpdateFromReleaseAsync), ex);
             MessageBox.Show("No se pudo aplicar la actualizacion automaticamente. Revisa logs para mas detalle.", "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Error);
-            SetUpdateState(true, "Actualizacion disponible");
+            ApplyUpdateState(new UpdateCheckResult
+            {
+                IsSuccessful = false,
+                StatusText = "No se pudo verificar"
+            });
         }
         finally
         {
@@ -318,13 +303,18 @@ public class SettingsViewModel : INotifyPropertyChanged
         }
     }
 
-    private void SetUpdateState(bool available, string status)
+    private void ApplyUpdateState(UpdateCheckResult result)
     {
-        UpdateAvailable = available;
-        UpdateStatusText = status;
+        UpdateCheckSucceeded = result.IsSuccessful;
+        UpdateAvailable = result.UpdateAvailable;
+        UpdateStatusText = result.StatusText;
+        _latestRelease = result.Release;
+
         UpdateCheckState.HasChecked = true;
-        UpdateCheckState.UpdateAvailable = available;
-        UpdateCheckState.StatusText = status;
+        UpdateCheckState.CheckSucceeded = result.IsSuccessful;
+        UpdateCheckState.UpdateAvailable = result.UpdateAvailable;
+        UpdateCheckState.StatusText = result.StatusText;
+        UpdateCheckState.Release = result.Release;
     }
 
     private static void OpenUrl(string? url)

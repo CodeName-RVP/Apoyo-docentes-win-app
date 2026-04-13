@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Input;
 using AppParaUniversidad.Common;
@@ -35,27 +35,96 @@ public partial class StartMenuWindow : Window
         try
         {
             var currentVersion = GetType().Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
-            var latest = await _updateService.GetLatestReleaseAsync();
-            if (latest is null || string.IsNullOrWhiteSpace(latest.TagName))
+            var result = await _updateService.CheckForUpdatesAsync(currentVersion);
+            ApplyUpdateState(result);
+
+            if (!result.UpdateAvailable || result.Release is null)
             {
-                UpdateCheckState.HasChecked = true;
-                UpdateCheckState.UpdateAvailable = true;
-                UpdateCheckState.StatusText = "Actualizacion disponible";
                 return;
             }
 
-            var hasUpdate = GitHubUpdateService.IsRemoteNewer(currentVersion, latest.TagName);
-            UpdateCheckState.HasChecked = true;
-            UpdateCheckState.UpdateAvailable = hasUpdate;
-            UpdateCheckState.StatusText = hasUpdate ? "Actualizacion disponible" : "Actualizado";
+            var remoteTag = GitHubUpdateService.NormalizeTag(result.Release.TagName);
+            var answer = await Dispatcher.InvokeAsync(() =>
+                MessageBox.Show(
+                    $"Se detecto una nueva version disponible: {remoteTag}.\n\nDeseas actualizar la app ahora?",
+                    "Actualizacion disponible",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information));
+
+            if (answer == MessageBoxResult.Yes)
+            {
+                await ApplyUpdateFromReleaseAsync(result.Release);
+            }
         }
         catch (Exception ex)
         {
             Logger.LogError(nameof(CheckUpdatesAtStartupAsync), ex);
-            UpdateCheckState.HasChecked = true;
-            UpdateCheckState.UpdateAvailable = true;
-            UpdateCheckState.StatusText = "Actualizacion disponible";
+            ApplyUpdateState(new UpdateCheckResult
+            {
+                IsSuccessful = false,
+                StatusText = "No se pudo verificar"
+            });
         }
+    }
+
+    private async System.Threading.Tasks.Task ApplyUpdateFromReleaseAsync(GitHubUpdateInfo release)
+    {
+        try
+        {
+            var result = await _updateService.ApplyUpdateAsync(release);
+            if (result.RequiresShutdown)
+            {
+                Application.Current.Shutdown();
+                return;
+            }
+
+            if (result.OpenReleasePage)
+            {
+                if (!string.IsNullOrWhiteSpace(release.HtmlUrl))
+                {
+                    OpenUrl(release.HtmlUrl);
+                }
+
+                MessageBox.Show(result.Message, "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (!result.Started)
+            {
+                MessageBox.Show(result.Message, "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            MessageBox.Show(result.Message, "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(nameof(ApplyUpdateFromReleaseAsync), ex);
+            MessageBox.Show("No se pudo aplicar la actualizacion automaticamente. Revisa logs para mas detalle.", "Actualizaciones", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private static void ApplyUpdateState(UpdateCheckResult result)
+    {
+        UpdateCheckState.HasChecked = true;
+        UpdateCheckState.CheckSucceeded = result.IsSuccessful;
+        UpdateCheckState.UpdateAvailable = result.UpdateAvailable;
+        UpdateCheckState.StatusText = result.StatusText;
+        UpdateCheckState.Release = result.Release;
+    }
+
+    private static void OpenUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return;
+        }
+
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = url,
+            UseShellExecute = true
+        });
     }
 
     private void ApplyWindowSize(double width, double height)

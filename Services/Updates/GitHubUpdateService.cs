@@ -1,5 +1,7 @@
-using System;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -14,6 +16,22 @@ public sealed class GitHubUpdateInfo
     public string HtmlUrl { get; init; } = string.Empty;
     public string AssetName { get; init; } = string.Empty;
     public string AssetDownloadUrl { get; init; } = string.Empty;
+}
+
+public sealed class UpdateCheckResult
+{
+    public bool IsSuccessful { get; init; }
+    public bool UpdateAvailable { get; init; }
+    public string StatusText { get; init; } = "No se pudo verificar";
+    public GitHubUpdateInfo? Release { get; init; }
+}
+
+public sealed class UpdateApplyResult
+{
+    public bool Started { get; init; }
+    public bool RequiresShutdown { get; init; }
+    public bool OpenReleasePage { get; init; }
+    public string Message { get; init; } = string.Empty;
 }
 
 public sealed class GitHubUpdateService
@@ -35,7 +53,6 @@ public sealed class GitHubUpdateService
 
         var tag = root.TryGetProperty("tag_name", out var tagProp) ? tagProp.GetString() ?? string.Empty : string.Empty;
         var html = root.TryGetProperty("html_url", out var htmlProp) ? htmlProp.GetString() ?? string.Empty : string.Empty;
-
         var (assetName, assetUrl) = ReadPreferredAsset(root);
 
         return new GitHubUpdateInfo
@@ -47,6 +64,41 @@ public sealed class GitHubUpdateService
         };
     }
 
+    public async Task<UpdateCheckResult> CheckForUpdatesAsync(string currentVersion)
+    {
+        try
+        {
+            var latest = await GetLatestReleaseAsync();
+            if (latest is null || string.IsNullOrWhiteSpace(latest.TagName))
+            {
+                return new UpdateCheckResult
+                {
+                    IsSuccessful = false,
+                    StatusText = "No se pudo verificar"
+                };
+            }
+
+            var hasUpdate = IsRemoteNewer(currentVersion, latest.TagName);
+            return new UpdateCheckResult
+            {
+                IsSuccessful = true,
+                UpdateAvailable = hasUpdate,
+                StatusText = hasUpdate
+                    ? $"Actualizacion disponible ({NormalizeTag(latest.TagName)})"
+                    : "Actualizado",
+                Release = latest
+            };
+        }
+        catch
+        {
+            return new UpdateCheckResult
+            {
+                IsSuccessful = false,
+                StatusText = "No se pudo verificar"
+            };
+        }
+    }
+
     public async Task DownloadFileAsync(string url, string destinationPath)
     {
         using var client = CreateClient();
@@ -56,6 +108,105 @@ public sealed class GitHubUpdateService
         await using var source = await response.Content.ReadAsStreamAsync();
         await using var destination = File.Create(destinationPath);
         await source.CopyToAsync(destination);
+    }
+
+    public async Task<UpdateApplyResult> ApplyUpdateAsync(GitHubUpdateInfo release)
+    {
+        if (release is null)
+        {
+            return new UpdateApplyResult
+            {
+                Message = "No se encontro la informacion del release."
+            };
+        }
+
+        if (string.IsNullOrWhiteSpace(release.AssetDownloadUrl))
+        {
+            return new UpdateApplyResult
+            {
+                OpenReleasePage = true,
+                Message = "El release no contiene un archivo descargable."
+            };
+        }
+
+        var tempRoot = Path.Combine(Path.GetTempPath(), "ApoyoDocentesUpdater", Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(tempRoot);
+
+        var assetName = string.IsNullOrWhiteSpace(release.AssetName) ? "update.bin" : release.AssetName;
+        var assetPath = Path.Combine(tempRoot, assetName);
+        await DownloadFileAsync(release.AssetDownloadUrl, assetPath);
+
+        var extension = Path.GetExtension(assetPath).ToLowerInvariant();
+        if (extension == ".msi" || extension == ".exe")
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = assetPath,
+                UseShellExecute = true
+            });
+
+            return new UpdateApplyResult
+            {
+                Started = true,
+                Message = "Instalador abierto."
+            };
+        }
+
+        if (extension != ".zip")
+        {
+            return new UpdateApplyResult
+            {
+                OpenReleasePage = true,
+                Message = "Formato de actualizacion no soportado automaticamente."
+            };
+        }
+
+        var currentExe = Process.GetCurrentProcess().MainModule?.FileName;
+        if (string.IsNullOrWhiteSpace(currentExe))
+        {
+            return new UpdateApplyResult
+            {
+                Message = "No se pudo detectar el ejecutable actual."
+            };
+        }
+
+        var appDir = Path.GetDirectoryName(currentExe);
+        if (string.IsNullOrWhiteSpace(appDir))
+        {
+            return new UpdateApplyResult
+            {
+                Message = "No se pudo detectar la carpeta de la aplicacion."
+            };
+        }
+
+        var exeName = Path.GetFileName(currentExe);
+        var extractDir = Path.Combine(tempRoot, "extract");
+        ZipFile.ExtractToDirectory(assetPath, extractDir, true);
+
+        var updaterScript = Path.Combine(tempRoot, "apply-update.cmd");
+        var script =
+            "@echo off" + Environment.NewLine +
+            "timeout /t 2 /nobreak > nul" + Environment.NewLine +
+            $"robocopy \"{extractDir}\" \"{appDir}\" /E /R:2 /W:1 > nul" + Environment.NewLine +
+            $"start \"\" \"{Path.Combine(appDir, exeName)}\"" + Environment.NewLine +
+            "exit /b 0";
+
+        File.WriteAllText(updaterScript, script);
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = updaterScript,
+            UseShellExecute = true,
+            WindowStyle = ProcessWindowStyle.Hidden,
+            CreateNoWindow = true
+        });
+
+        return new UpdateApplyResult
+        {
+            Started = true,
+            RequiresShutdown = true,
+            Message = "Actualizacion descargada."
+        };
     }
 
     public static bool IsRemoteNewer(string currentVersion, string remoteTag)
@@ -70,10 +221,20 @@ public sealed class GitHubUpdateService
         return remote > current;
     }
 
+    public static string NormalizeTag(string tag)
+    {
+        if (string.IsNullOrWhiteSpace(tag))
+        {
+            return string.Empty;
+        }
+
+        return tag.StartsWith("v", StringComparison.OrdinalIgnoreCase) ? tag : $"v{tag}";
+    }
+
     private static HttpClient CreateClient()
     {
         var client = new HttpClient();
-        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("AppParaUniversidad", "1.0"));
+        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ApoyoDocentes", "1.0"));
         return client;
     }
 
