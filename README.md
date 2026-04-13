@@ -1,12 +1,23 @@
-# Apoyo Docentes - Windows App
+﻿# Apoyo Docentes - Windows App
 
 Aplicacion de escritorio (WPF, .NET 8) para automatizar cargas horarias docentes, directorio de contactos, envio de correos y consulta de horarios.
 
-## Requisitos
+## Usuario final
+- Windows 10/11
+- Descarga el paquete listo para usar: `ApoyoDocentes-v1.0.0-win-x64.zip`
+- No requiere instalar .NET ni herramientas de desarrollo
+
+Pasos:
+1) Descargar el `.zip` desde GitHub.
+2) Descomprimirlo.
+3) Ejecutar `ApoyoDocentes.exe`.
+4) Si se usara Gmail o Google Sheets, vincular el archivo `client_secret.json` desde la app.
+
+## Desarrollo
 - Windows 10/11
 - .NET 8 SDK
 
-## Como ejecutar
+## Como ejecutar en desarrollo
 1) Abre la solucion en Visual Studio / VS Code
 2) Compila en Debug o Release
 3) Ejecuta el proyecto principal
@@ -52,18 +63,21 @@ En el proyecto:
 ## Notas
 - El archivo de base de datos se guarda en %AppData%\AppParaUniversidad\app.db
 - Las credenciales de Google se configuran desde la app
+
 ## Imagenes
 Coloca tus capturas en `docs/images/` y referencialas asi:
 
 ![Pantalla principal](docs/images/pantalla-principal.png)
 
 ## DESCARGA RAPIDA (USUARIO FINAL)
-Para usuarios no tecnicos, usa el paquete listo en:
-- `Releases` del repositorio (asset recomendado: `ApoyoDocentes-v1.0.0-win-x64.zip`)
+Para usuarios no tecnicos, usa una de estas rutas:
+- `Releases` del repositorio
+- Carpeta `DESCARGA_AQUI` del repo
+
+Archivo recomendado:
+- `ApoyoDocentes-v1.0.0-win-x64.zip`
 
 Pasos:
-1. Abrir la seccion `Releases` del repositorio y descargar el `.zip`. 
+1. Descargar el `.zip`.
 2. Descomprimirlo.
 3. Ejecutar `ApoyoDocentes.exe`.
-
-

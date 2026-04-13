@@ -1,12 +1,13 @@
-DESCARGA PARA USUARIO FINAL
+﻿DESCARGA PARA USUARIO FINAL
 
-Este repositorio ya no guarda binarios grandes en el arbol principal.
-
-Usa la seccion Releases de GitHub para descargar:
+Archivo recomendado:
 - ApoyoDocentes-v1.0.0-win-x64.zip
 
+Este paquete ya incluye el runtime necesario para ejecutar la app en Windows.
+No hace falta instalar .NET.
+
 Pasos:
-1) Ir a Releases
-2) Descargar el .zip
-3) Descomprimir
-4) Ejecutar ApoyoDocentes.exe
+1) Descargar el .zip
+2) Descomprimirlo en una carpeta normal
+3) Ejecutar ApoyoDocentes.exe
+4) Si usaras Gmail o Google Sheets, vincular client_secret.json desde Configuracion
