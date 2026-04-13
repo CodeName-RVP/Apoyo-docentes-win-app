@@ -36,7 +36,12 @@ public sealed class UpdateApplyResult
 
 public sealed class GitHubUpdateService
 {
-    private const string LatestReleaseEndpoint = "https://api.github.com/repos/CodeName-RVP/Apoyo-docentes-win-app/releases/latest";
+    private const string RepoOwner = "CodeName-RVP";
+    private const string RepoName = "Apoyo-docentes-win-app";
+    private const string RepoApiBase = "https://api.github.com/repos/CodeName-RVP/Apoyo-docentes-win-app";
+    private const string LatestReleaseEndpoint = RepoApiBase + "/releases/latest";
+    private const string TagsEndpoint = RepoApiBase + "/tags";
+    private const string ReleasesPageUrl = "https://github.com/CodeName-RVP/Apoyo-docentes-win-app/releases";
 
     public async Task<GitHubUpdateInfo?> GetLatestReleaseAsync()
     {
@@ -55,12 +60,49 @@ public sealed class GitHubUpdateService
         var html = root.TryGetProperty("html_url", out var htmlProp) ? htmlProp.GetString() ?? string.Empty : string.Empty;
         var (assetName, assetUrl) = ReadPreferredAsset(root);
 
+        if (string.IsNullOrWhiteSpace(tag))
+        {
+            return null;
+        }
+
         return new GitHubUpdateInfo
         {
             TagName = tag,
-            HtmlUrl = html,
+            HtmlUrl = string.IsNullOrWhiteSpace(html) ? ReleasesPageUrl : html,
             AssetName = assetName,
             AssetDownloadUrl = assetUrl
+        };
+    }
+
+    public async Task<GitHubUpdateInfo?> GetLatestTagAsync()
+    {
+        using var client = CreateClient();
+        using var response = await client.GetAsync(TagsEndpoint);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var doc = await JsonDocument.ParseAsync(stream);
+        if (doc.RootElement.ValueKind != JsonValueKind.Array || doc.RootElement.GetArrayLength() == 0)
+        {
+            return null;
+        }
+
+        var first = doc.RootElement[0];
+        var tag = first.TryGetProperty("name", out var nameProp) ? nameProp.GetString() ?? string.Empty : string.Empty;
+        if (string.IsNullOrWhiteSpace(tag))
+        {
+            return null;
+        }
+
+        return new GitHubUpdateInfo
+        {
+            TagName = tag,
+            HtmlUrl = ReleasesPageUrl,
+            AssetName = string.Empty,
+            AssetDownloadUrl = string.Empty
         };
     }
 
@@ -69,28 +111,26 @@ public sealed class GitHubUpdateService
         try
         {
             var latest = await GetLatestReleaseAsync();
-            if (latest is null || string.IsNullOrWhiteSpace(latest.TagName))
+            if (latest is not null)
             {
-                return new UpdateCheckResult
-                {
-                    IsSuccessful = false,
-                    StatusText = "No se pudo verificar"
-                };
+                return BuildCheckResult(currentVersion, latest);
             }
 
-            var hasUpdate = IsRemoteNewer(currentVersion, latest.TagName);
+            latest = await GetLatestTagAsync();
+            if (latest is not null)
+            {
+                return BuildCheckResult(currentVersion, latest);
+            }
+
             return new UpdateCheckResult
             {
-                IsSuccessful = true,
-                UpdateAvailable = hasUpdate,
-                StatusText = hasUpdate
-                    ? $"Actualizacion disponible ({NormalizeTag(latest.TagName)})"
-                    : "Actualizado",
-                Release = latest
+                IsSuccessful = false,
+                StatusText = "No se pudo verificar"
             };
         }
-        catch
+        catch (Exception ex)
         {
+            Common.Logger.LogError(nameof(CheckForUpdatesAsync), ex);
             return new UpdateCheckResult
             {
                 IsSuccessful = false,
@@ -125,7 +165,7 @@ public sealed class GitHubUpdateService
             return new UpdateApplyResult
             {
                 OpenReleasePage = true,
-                Message = "El release no contiene un archivo descargable."
+                Message = "No se encontro un paquete descargable. Se abrira la pagina de releases."
             };
         }
 
@@ -229,6 +269,20 @@ public sealed class GitHubUpdateService
         }
 
         return tag.StartsWith("v", StringComparison.OrdinalIgnoreCase) ? tag : $"v{tag}";
+    }
+
+    private static UpdateCheckResult BuildCheckResult(string currentVersion, GitHubUpdateInfo latest)
+    {
+        var hasUpdate = IsRemoteNewer(currentVersion, latest.TagName);
+        return new UpdateCheckResult
+        {
+            IsSuccessful = true,
+            UpdateAvailable = hasUpdate,
+            StatusText = hasUpdate
+                ? $"Actualizacion disponible ({NormalizeTag(latest.TagName)})"
+                : "Actualizado",
+            Release = latest
+        };
     }
 
     private static HttpClient CreateClient()
