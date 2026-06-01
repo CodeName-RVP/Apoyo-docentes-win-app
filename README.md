@@ -4,8 +4,7 @@ Aplicacion de escritorio (WPF, .NET 8) para automatizar cargas horarias docentes
 
 ## Usuario final
 - Windows 10/11
-- Descarga el paquete listo para usar: `ApoyoDocentes-v1.0.0-win-x64.zip`
-- No requiere instalar .NET ni herramientas de desarrollo
+- Descarga el paquete de realeases: `ApoyoDocentes-v1.0.0-win-x64.zip`
 
 Pasos:
 1) Descargar el `.zip` desde GitHub.
@@ -13,10 +12,9 @@ Pasos:
 3) Ejecutar `ApoyoDocentes.exe`.
 4) Si se usara Gmail o Google Sheets, vincular el archivo `client_secret.json` desde la app.
 
-## Desarrollo
+## Para Plataformas
 - Windows 10/11
-- .NET 8 SDK
-
+  
 ## Como ejecutar en desarrollo
 1) Abre la solucion en Visual Studio / VS Code
 2) Compila en Debug o Release
@@ -26,7 +24,7 @@ Pasos:
 - Carga de Excel con tabla general
 - Generacion de cargas por docente
 - Directorio de contactos (SQLite)
-- Envio de correos (Gmail API)
+- Envio de correos usando (Gmail API)
 - Horarios docente desde Google Sheets
 - Tema claro/oscuro
 
@@ -65,19 +63,5 @@ En el proyecto:
 - Las credenciales de Google se configuran desde la app
 
 ## Imagenes
-Coloca tus capturas en `docs/images/` y referencialas asi:
-
 ![Pantalla principal](docs/images/pantalla-principal.png)
 
-## DESCARGA RAPIDA (USUARIO FINAL)
-Para usuarios no tecnicos, usa una de estas rutas:
-- `Releases` del repositorio
-- Carpeta `DESCARGA_AQUI` del repo
-
-Archivo recomendado:
-- `ApoyoDocentes-v1.0.0-win-x64.zip`
-
-Pasos:
-1. Descargar el `.zip`.
-2. Descomprimirlo.
-3. Ejecutar `ApoyoDocentes.exe`.
