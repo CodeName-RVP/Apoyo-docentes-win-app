@@ -45,7 +45,7 @@
                                             <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
                                             <TextBlock Text="{Binding SheetId}" FontSize="11" TextWrapping="Wrap" />
                                         </StackPanel>
-                                        <Button Grid.Column="1" Content="Eliminar" Command="{Binding DataContext.DeleteSheetIdItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Margin="8,0,0,0" />
+                                        <Button Grid.Column="1" Content="Eliminar" Style="{StaticResource CompactButtonStyle}" Command="{Binding DataContext.DeleteSheetIdItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Margin="8,0,0,0" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>

@@ -22,9 +22,9 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Horarios Docente" Margin="10,0,0,0" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="Horarios Docente" Margin="0,2,8,2" Padding="14,4" Click="OnSchedulesClick" />
-                    <Button Content="Historial Sheets" Margin="0,2,8,2" Padding="14,4" Click="OnSheetHistoryClick" />
-                    <Button Content="Configuracion" Margin="0,2,8,2" Padding="14,4" Click="OnSettingsClick" />
+                    <Button Content="Horarios Docente" Style="{StaticResource HeaderNavigationButtonStyle}" Click="OnSchedulesClick" />
+                    <Button Content="Historial Sheets" Style="{StaticResource HeaderNavigationButtonStyle}" Click="OnSheetHistoryClick" />
+                    <Button Content="Configuracion" Style="{StaticResource HeaderNavigationButtonStyle}" Click="OnSettingsClick" />
                     <Button Style="{StaticResource TitleBarButtonStyle}" Content="{DynamicResource IconMinimize}" Width="40" Click="OnMinimizeClick" />
                     <Button Style="{StaticResource TitleBarMaximizeButtonStyle}" Width="40" Click="OnMaximizeClick" />
                     <Button Style="{StaticResource TitleBarCloseButtonStyle}" Content="{DynamicResource IconClose}" Width="40" Click="OnCloseClick" />

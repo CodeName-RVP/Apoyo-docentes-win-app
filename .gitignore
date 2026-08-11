@@ -16,6 +16,11 @@ obj/
 
 # SQLite / local data (optional)
 app.db
+client_secret.json
+settings.json
+tokens/
+tokens_sheets/
+*.protected
 
 # Shortcuts
 *.lnk

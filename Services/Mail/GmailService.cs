@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AppParaUniversidad.Common;
+using AppParaUniversidad.Services.Security;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Gmail.v1.Data;
 using Google.Apis.Services;
@@ -47,7 +48,7 @@ public sealed class GmailService : IGmailService
                 new[] { GoogleGmail.Scope.GmailSend },
                 "user",
                 cts.Token,
-                new FileDataStore(tokenDir, true)).ConfigureAwait(false);
+                new DpapiDataStore(tokenDir)).ConfigureAwait(false);
 
             return new GoogleGmail(new BaseClientService.Initializer
             {

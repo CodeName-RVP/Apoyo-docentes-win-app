@@ -22,7 +22,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Cargas Docentes" Margin="10,0,0,0" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <TabControl x:Name="MainTabs" TabStripPlacement="Top" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="0,2,6,2">
+                    <TabControl x:Name="MainTabs" TabStripPlacement="Top" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="0,4,6,4">
                         <TabControl.Template>
                             <ControlTemplate TargetType="TabControl">
                                 <TabPanel IsItemsHost="True" Background="Transparent" />
@@ -34,8 +34,9 @@
                                 <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
                                 <Setter Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
-                                <Setter Property="Padding" Value="14,4" />
-                                <Setter Property="Margin" Value="0,2,8,2" />
+                                <Setter Property="MinHeight" Value="32" />
+                                <Setter Property="Padding" Value="12,4" />
+                                <Setter Property="Margin" Value="0,0,8,0" />
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="TabItem">

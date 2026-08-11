@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -16,6 +17,7 @@ public sealed class GitHubUpdateInfo
     public string HtmlUrl { get; init; } = string.Empty;
     public string AssetName { get; init; } = string.Empty;
     public string AssetDownloadUrl { get; init; } = string.Empty;
+    public string AssetSha256 { get; init; } = string.Empty;
 }
 
 public sealed class UpdateCheckResult
@@ -58,7 +60,7 @@ public sealed class GitHubUpdateService
 
         var tag = root.TryGetProperty("tag_name", out var tagProp) ? tagProp.GetString() ?? string.Empty : string.Empty;
         var html = root.TryGetProperty("html_url", out var htmlProp) ? htmlProp.GetString() ?? string.Empty : string.Empty;
-        var (assetName, assetUrl) = ReadPreferredAsset(root);
+        var (assetName, assetUrl, assetSha256) = ReadPreferredAsset(root);
 
         if (string.IsNullOrWhiteSpace(tag))
         {
@@ -70,7 +72,8 @@ public sealed class GitHubUpdateService
             TagName = tag,
             HtmlUrl = string.IsNullOrWhiteSpace(html) ? ReleasesPageUrl : html,
             AssetName = assetName,
-            AssetDownloadUrl = assetUrl
+            AssetDownloadUrl = assetUrl,
+            AssetSha256 = assetSha256
         };
     }
 
@@ -169,12 +172,29 @@ public sealed class GitHubUpdateService
             };
         }
 
+        if (string.IsNullOrWhiteSpace(release.AssetSha256))
+        {
+            return new UpdateApplyResult
+            {
+                OpenReleasePage = true,
+                Message = "El release no publica un hash SHA-256 verificable. La actualizacion automatica se bloqueo por seguridad."
+            };
+        }
+
         var tempRoot = Path.Combine(Path.GetTempPath(), "ApoyoDocentesUpdater", Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(tempRoot);
 
         var assetName = string.IsNullOrWhiteSpace(release.AssetName) ? "update.bin" : release.AssetName;
         var assetPath = Path.Combine(tempRoot, assetName);
         await DownloadFileAsync(release.AssetDownloadUrl, assetPath);
+
+        if (!await VerifySha256Async(assetPath, release.AssetSha256))
+        {
+            return new UpdateApplyResult
+            {
+                Message = "La verificacion SHA-256 del paquete fallo. No se aplico la actualizacion."
+            };
+        }
 
         var extension = Path.GetExtension(assetPath).ToLowerInvariant();
         if (extension == ".msi" || extension == ".exe")
@@ -292,11 +312,30 @@ public sealed class GitHubUpdateService
         return client;
     }
 
-    private static (string Name, string Url) ReadPreferredAsset(JsonElement root)
+    private static async Task<bool> VerifySha256Async(string path, string expectedDigest)
+    {
+        const string prefix = "sha256:";
+        if (!expectedDigest.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var expected = expectedDigest[prefix.Length..];
+        if (expected.Length != 64 || expected.Any(c => !Uri.IsHexDigit(c)))
+        {
+            return false;
+        }
+
+        await using var stream = File.OpenRead(path);
+        var hash = await SHA256.HashDataAsync(stream);
+        return string.Equals(Convert.ToHexString(hash), expected, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static (string Name, string Url, string Sha256) ReadPreferredAsset(JsonElement root)
     {
         if (!root.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array)
         {
-            return (string.Empty, string.Empty);
+            return (string.Empty, string.Empty, string.Empty);
         }
 
         var candidates = assets.EnumerateArray()
@@ -304,14 +343,15 @@ public sealed class GitHubUpdateService
             {
                 var name = a.TryGetProperty("name", out var n) ? n.GetString() ?? string.Empty : string.Empty;
                 var url = a.TryGetProperty("browser_download_url", out var u) ? u.GetString() ?? string.Empty : string.Empty;
-                return (name, url);
+                var digest = a.TryGetProperty("digest", out var d) ? d.GetString() ?? string.Empty : string.Empty;
+                return (name, url, digest);
             })
             .Where(a => !string.IsNullOrWhiteSpace(a.name) && !string.IsNullOrWhiteSpace(a.url))
             .ToList();
 
         if (candidates.Count == 0)
         {
-            return (string.Empty, string.Empty);
+            return (string.Empty, string.Empty, string.Empty);
         }
 
         foreach (var ext in new[] { ".zip", ".msi", ".exe" })
@@ -319,12 +359,12 @@ public sealed class GitHubUpdateService
             var match = candidates.FirstOrDefault(c => c.name.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
             if (!string.IsNullOrWhiteSpace(match.name))
             {
-                return (match.name, match.url);
+                return (match.name, match.url, match.digest);
             }
         }
 
         var first = candidates[0];
-        return (first.name, first.url);
+        return (first.name, first.url, first.digest);
     }
 
     private static Version? ParseVersion(string input)

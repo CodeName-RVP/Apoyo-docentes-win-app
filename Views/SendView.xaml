@@ -93,6 +93,7 @@
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Content="{Binding Sugerencias[0], StringFormat='Sugerir: {0}'}"
+                                        Style="{StaticResource CompactButtonStyle}"
                                         Command="{Binding DataContext.ApplySuggestionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"
                                         IsEnabled="{Binding Sugerencias[0], Converter={StaticResource NullOrEmptyToBoolConverter}}" />

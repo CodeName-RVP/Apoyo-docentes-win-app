@@ -210,8 +210,9 @@
             </Style>
 
             <Style TargetType="Button">
-                <Setter Property="Padding" Value="8,4" />
-                <Setter Property="Margin" Value="0,0,6,0" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="Margin" Value="0,0,8,0" />
                 <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}" />
@@ -243,6 +244,8 @@
             </Style>
 
             <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+                <Setter Property="Height" Value="40" />
+                <Setter Property="MinHeight" Value="0" />
                 <Setter Property="Background" Value="{DynamicResource TitleBarBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushLight}" />
@@ -280,6 +283,26 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Style>
+
+            <Style x:Key="HeaderNavigationButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="Padding" Value="12,4" />
+                <Setter Property="Margin" Value="0,4,8,4" />
+            </Style>
+
+            <Style x:Key="PrimaryMenuButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Width" Value="320" />
+                <Setter Property="Height" Value="64" />
+                <Setter Property="Padding" Value="20,10" />
+                <Setter Property="Margin" Value="0,0,0,16" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="CompactButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="MinHeight" Value="28" />
+                <Setter Property="Padding" Value="8,3" />
+                <Setter Property="Margin" Value="0" />
             </Style>
 
             <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}">
