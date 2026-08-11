@@ -26,3 +26,7 @@ tokens_sheets/
 *.lnk
 artifacts/
 
+# Release artifacts
+publish/
+*.zip
+
