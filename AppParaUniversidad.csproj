@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="GoogleOAuth.local.props" Condition="Exists('GoogleOAuth.local.props')" />
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
@@ -21,6 +22,8 @@
     <!-- No generar símbolos de depuración para el paquete final -->
     <DebugType>None</DebugType>
     <DebugSymbols>false</DebugSymbols>
+    <GoogleClientId Condition="'$(GoogleClientId)' == ''">__GOOGLE_CLIENT_ID__</GoogleClientId>
+    <GoogleClientSecret Condition="'$(GoogleClientSecret)' == ''">__GOOGLE_CLIENT_SECRET__</GoogleClientSecret>
   </PropertyGroup>
 
   <ItemGroup>
@@ -46,5 +49,30 @@
 
   <Target Name="CreateProjectShortcut" AfterTargets="Build">
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('$(ProjectDir)Apoyo Docentes.lnk'); $s.TargetPath = '$(TargetDir)$(AssemblyName).exe'; $s.WorkingDirectory = '$(TargetDir)'; $s.IconLocation = '$(TargetDir)$(AssemblyName).exe,0'; $s.Save()&quot;" />
+  </Target>
+
+  <Target Name="GenerateGoogleOAuthConfig" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <GoogleOAuthConfigFile>$(IntermediateOutputPath)GoogleOAuthConfig.g.cs</GoogleOAuthConfigFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_GoogleOAuthConfigLines Include="namespace AppParaUniversidad.Services.Google%3B" />
+      <_GoogleOAuthConfigLines Include="internal static class GoogleOAuthConfig" />
+      <_GoogleOAuthConfigLines Include="{" />
+      <_GoogleOAuthConfigLines Include="    public const string ClientId = &quot;$(GoogleClientId)&quot;%3B" />
+      <_GoogleOAuthConfigLines Include="    public const string ClientSecret = &quot;$(GoogleClientSecret)&quot;%3B" />
+      <_GoogleOAuthConfigLines Include="}" />
+    </ItemGroup>
+
+    <WriteLinesToFile
+      File="$(GoogleOAuthConfigFile)"
+      Lines="@(_GoogleOAuthConfigLines)"
+      Overwrite="true"
+      Encoding="UTF-8" />
+
+    <ItemGroup>
+      <Compile Include="$(GoogleOAuthConfigFile)" />
+    </ItemGroup>
   </Target>
 </Project>

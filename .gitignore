@@ -29,4 +29,4 @@ artifacts/
 # Release artifacts
 publish/
 *.zip
-
+GoogleOAuth.local.props

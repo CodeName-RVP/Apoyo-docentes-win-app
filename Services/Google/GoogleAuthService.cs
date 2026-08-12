@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AppParaUniversidad.Services.Security;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
+using Google.Apis.Auth.OAuth2.Responses;
 
 namespace AppParaUniversidad.Services.Google;
 
@@ -13,12 +14,8 @@ public sealed class GoogleAuthService
     private const string AppFolder = "AppParaUniversidad";
     private const string TokenFolderName = "tokens-google";
 
-    private const string ClientId =
-        "CONFIGURE_GOOGLE_CLIENT_ID";
-
-    private const string ClientSecret =
-        "CONFIGURE_GOOGLE_CLIENT_SECRET";
-
+    private const string ClientId = GoogleOAuthConfig.ClientId;
+    private const string ClientSecret = GoogleOAuthConfig.ClientSecret;
     public static readonly string[] Scopes =
     {
         "https://www.googleapis.com/auth/gmail.send",
@@ -39,12 +36,16 @@ public sealed class GoogleAuthService
 
     private async Task<UserCredential> AuthorizeAsync()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        var appData = Environment.GetFolderPath(
+            Environment.SpecialFolder.ApplicationData);
+
         var appPath = Path.Combine(appData, AppFolder);
         System.IO.Directory.CreateDirectory(appPath);
 
         var tokenDir = Path.Combine(appPath, TokenFolderName);
         System.IO.Directory.CreateDirectory(tokenDir);
+
+        var dataStore = new DpapiDataStore(tokenDir);
 
         var initializer = new GoogleAuthorizationCodeFlow.Initializer
         {
@@ -52,16 +53,25 @@ public sealed class GoogleAuthService
             {
                 ClientId = ClientId,
                 ClientSecret = ClientSecret
-            },
-            DataStore = new DpapiDataStore(tokenDir)
+            }
         };
 
-        return await GoogleWebAuthorizationBroker.AuthorizeAsync(
-            initializer,
-            Scopes,
-            "user",
-            usePkce: true,
-            CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            return await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                initializer,
+                Scopes,
+                "user",
+                usePkce: true,
+                CancellationToken.None,
+                dataStore: dataStore
+            ).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Common.Logger.LogError(nameof(AuthorizeAsync), ex);
+            throw;
+        }
     }
 
     public Task<UserCredential> GetCredentialAsync()
