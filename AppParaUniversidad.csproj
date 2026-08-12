@@ -5,9 +5,22 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
     <AssemblyName>ApoyoDocentes</AssemblyName>
     <Product>Apoyo Docentes</Product>
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
+
+    <!-- Publicación para Windows -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+
+    <!-- Incluir DLL nativas dentro del EXE -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+
+    <!-- No generar símbolos de depuración para el paquete final -->
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +36,12 @@
 
   <ItemGroup>
     <Resource Include="Assets\Icons\*.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Guia de uso.txt">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
   </ItemGroup>
 
   <Target Name="CreateProjectShortcut" AfterTargets="Build">
