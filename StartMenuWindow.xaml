@@ -30,16 +30,10 @@
             <Grid Grid.Row="1">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Button Content="ENTREGA DE HORARIOS A DOCENTES"
-                            Padding="20"
-                            Margin="25"
-                            Width="320"
-                            Height="64"
+                            Style="{StaticResource PrimaryMenuButtonStyle}"
                             Click="OnOpenDeliveryClick" />
                     <Button Content="HORARIOS DOCENTE"
-                            Padding="20"
-                            Margin="25"
-                            Width="320"
-                            Height="64"
+                            Style="{StaticResource PrimaryMenuButtonStyle}"
                             Click="OnOpenTeacherSchedulesClick" />
                 </StackPanel>
 
@@ -47,7 +41,6 @@
                         HorizontalAlignment="Right"
                         VerticalAlignment="Bottom"
                         Margin="25"
-                        Padding="20,10"
                         Click="OnOptionsClick" />
 
                 <TextBlock Text="{Binding AppVersionText}"

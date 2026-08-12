@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using AppParaUniversidad.Common;
 using AppParaUniversidad.Domain.Models;
+using AppParaUniversidad.Services.Security;
 using System.Text.RegularExpressions;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
@@ -194,7 +195,7 @@ public sealed class ScheduleSheetsReader : IScheduleReader
                 new[] { SheetsService.Scope.SpreadsheetsReadonly },
                 "user",
                 cts.Token,
-                new FileDataStore(tokenDir, true)).ConfigureAwait(false);
+                new DpapiDataStore(tokenDir)).ConfigureAwait(false);
 
             return new SheetsService(new BaseClientService.Initializer
             {
