@@ -41,16 +41,9 @@ public partial class TeacherSchedulesWindow : Window
         SettingsViewControl.DataContext = settingsViewModel;
     }
 
-    private IGmailService CreateGmailService()
+        private IGmailService CreateGmailService()
     {
-        try
-        {
-            return new GmailService();
-        }
-        catch
-        {
-            return new NullGmailService("Falta client_secret.json en %AppData%/AppParaUniversidad");
-        }
+        return new GmailService();
     }
 
     private void ApplyWindowSize(double width, double height)

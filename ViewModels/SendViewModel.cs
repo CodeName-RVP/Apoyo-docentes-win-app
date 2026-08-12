@@ -193,8 +193,8 @@ public class SendViewModel : INotifyPropertyChanged
         _templateService = templateService;
         _gmailService = gmailService;
         _gmailFactory = gmailFactory;
-        GmailReady = gmailService is not NullGmailService && GmailCredentialHelper.HasCredential();
-        GmailStatus = GmailReady ? "Credenciales listas" : "Faltan credenciales (client_secret.json)";
+        GmailReady = false;
+        GmailStatus = "Cuenta de Google no vinculada";
 
         SelectValidCommand = new RelayCommand(_ => SelectValidRecipients(), _ => Recipients.Any());
         DeselectAllCommand = new RelayCommand(_ => DeselectAll(), _ => Recipients.Any());
@@ -408,49 +408,31 @@ public class SendViewModel : INotifyPropertyChanged
 
     private async Task LoadCredentialAsync()
     {
-        var dlg = new Microsoft.Win32.OpenFileDialog
-        {
-            Filter = "JSON (*.json)|*.json|Todos los archivos|*.*",
-            Multiselect = false
-        };
-        if (dlg.ShowDialog() != true) return;
-
         try
         {
-            GmailCredentialHelper.CopyCredential(dlg.FileName);
-            GmailStatus = "Credenciales copiadas. Intentando inicializar...";
+            GmailStatus = "Abriendo Google para vincular la cuenta...";
+
+            await Services.Google.GoogleAuthService.Shared.InitializeAsync().ConfigureAwait(true);
 
             if (_gmailFactory != null)
             {
-                try
-                {
-                    _gmailService = _gmailFactory();
-                    GmailReady = _gmailService is not NullGmailService && GmailCredentialHelper.HasCredential();
-                    if (GmailReady)
-                    {
-                        AccountEmail = await _gmailService.GetAccountEmailAsync() ?? string.Empty;
-                    }
-                    GmailStatus = GmailReady ? "Credenciales listas" : "No se pudo inicializar Gmail.";
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(nameof(LoadCredentialAsync), ex);
-                    GmailReady = false;
-                    GmailStatus = "Error al inicializar Gmail. Reintente o reinicie.";
-                }
+                _gmailService = _gmailFactory();
             }
-            else
-            {
-                GmailStatus = "Credenciales copiadas. Reinicie la app para usarlas.";
-            }
+
+            await _gmailService.InitializeAsync().ConfigureAwait(true);
+
+            GmailReady = _gmailService is not NullGmailService;
+            AccountEmail = await _gmailService.GetAccountEmailAsync().ConfigureAwait(true) ?? string.Empty;
+            GmailStatus = GmailReady
+                ? "Cuenta de Google vinculada"
+                : "No se pudo inicializar Gmail.";
         }
         catch (Exception ex)
         {
             Logger.LogError(nameof(LoadCredentialAsync), ex);
-            GmailStatus = "Error al copiar credenciales.";
+            GmailReady = false;
+            GmailStatus = "No se pudo vincular la cuenta de Google.";
         }
-
-        await Task.CompletedTask;
     }
 
     private async Task InitAccountEmailAsync()

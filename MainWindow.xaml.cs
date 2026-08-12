@@ -68,15 +68,7 @@ public partial class MainWindow : Window
 
     private IGmailService CreateGmailService()
     {
-        try
-        {
-            return new GmailService();
-        }
-        catch (Exception ex)
-        {
-            Common.Logger.LogError(nameof(CreateGmailService), ex);
-            return new NullGmailService("Falta client_secret.json en %AppData%/AppParaUniversidad");
-        }
+        return new GmailService();
     }
 
     private void ApplyWindowSize(double width, double height)
