@@ -16,6 +16,11 @@ public sealed class NullGmailService : IGmailService
         _reason = reason;
     }
 
+    public Task InitializeAsync(CancellationToken ct = default)
+    {
+        Logger.LogError(nameof(NullGmailService), new InvalidOperationException(_reason));
+        throw new InvalidOperationException(_reason);
+    }
     public Task SendAsync(string toEmail, string subject, string htmlBody, string? ccEmail, CancellationToken ct = default)
     {
         Logger.LogError(nameof(NullGmailService), new InvalidOperationException(_reason));

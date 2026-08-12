@@ -1,3 +1,4 @@
+using AppParaUniversidad.Services.Google;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,7 +19,6 @@ namespace AppParaUniversidad.Services.Schedules;
 public sealed class ScheduleSheetsReader : IScheduleReader
 {
     private const string AppFolder = "AppParaUniversidad";
-    private const string CredentialsFileName = "client_secret.json";
     private const string TokenFolderName = "tokens_sheets";
     private readonly Lazy<Task<SheetsService>> _serviceTask;
 
@@ -37,6 +37,9 @@ public sealed class ScheduleSheetsReader : IScheduleReader
                 result.Errors.Add("El ID de la hoja es requerido.");
                 return result;
             }
+
+            filePath = ExtractSpreadsheetId(filePath);
+
 
             var service = GetService();
             var range = sheetName;
@@ -143,6 +146,9 @@ public sealed class ScheduleSheetsReader : IScheduleReader
                 return names;
             }
 
+            filePath = ExtractSpreadsheetId(filePath);
+
+
             var service = GetService();
             var request = service.Spreadsheets.Get(filePath);
             request.Fields = "sheets.properties.title";
@@ -169,45 +175,54 @@ public sealed class ScheduleSheetsReader : IScheduleReader
         return names;
     }
 
+    private static string ExtractSpreadsheetId(string value)
+    {
+        var text = value.Trim();
+
+        if (!text.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+            !text.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return text;
+        }
+
+        if (!Uri.TryCreate(text, UriKind.Absolute, out var uri))
+        {
+            throw new ArgumentException("La URL de Google Sheets no es valida.", nameof(value));
+        }
+
+        const string marker = "/spreadsheets/d/";
+        var index = uri.AbsolutePath.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+
+        if (index < 0)
+        {
+            throw new ArgumentException("La URL no parece ser una URL valida de Google Sheets.", nameof(value));
+        }
+
+        var start = index + marker.Length;
+        var end = uri.AbsolutePath.IndexOf('/', start);
+
+        var id = end < 0
+            ? uri.AbsolutePath.Substring(start)
+            : uri.AbsolutePath.Substring(start, end - start);
+
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            throw new ArgumentException("No se pudo extraer el ID del Spreadsheet.", nameof(value));
+        }
+
+        return id;
+    }
     private SheetsService GetService() => _serviceTask.Value.GetAwaiter().GetResult();
 
     private async Task<SheetsService> BuildServiceAsync()
     {
-        var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        var appPath = Path.Combine(appData, AppFolder);
-        System.IO.Directory.CreateDirectory(appPath);
+        var credential = await GoogleAuthService.Shared.GetCredentialAsync().ConfigureAwait(false);
 
-        var credPath = Path.Combine(appPath, CredentialsFileName);
-        if (!File.Exists(credPath))
+        return new SheetsService(new BaseClientService.Initializer
         {
-            throw new InvalidOperationException($"No se encontro {credPath}. Copia tu client_secret.json alli.");
-        }
-
-        using var stream = new FileStream(credPath, FileMode.Open, FileAccess.Read);
-        var tokenDir = Path.Combine(appPath, TokenFolderName);
-        System.IO.Directory.CreateDirectory(tokenDir);
-
-        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
-        try
-        {
-            var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                GoogleClientSecrets.FromStream(stream).Secrets,
-                new[] { SheetsService.Scope.SpreadsheetsReadonly },
-                "user",
-                cts.Token,
-                new DpapiDataStore(tokenDir)).ConfigureAwait(false);
-
-            return new SheetsService(new BaseClientService.Initializer
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = "AppParaUniversidad"
-            });
-        }
-        catch (OperationCanceledException ex)
-        {
-            Logger.LogError(nameof(BuildServiceAsync), ex);
-            throw new InvalidOperationException("Autorizacion cancelada o tiempo agotado.", ex);
-        }
+            HttpClientInitializer = credential,
+            ApplicationName = "Apoyo Docentes"
+        });
     }
 
     
@@ -220,6 +235,9 @@ public sealed class ScheduleSheetsReader : IScheduleReader
             {
                 return rows;
             }
+
+            sheetId = ExtractSpreadsheetId(sheetId);
+
 
             var service = GetService();
             var request = service.Spreadsheets.Values.Get(sheetId, sheetName);

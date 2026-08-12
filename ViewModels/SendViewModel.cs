@@ -85,10 +85,11 @@ public class SendViewModel : INotifyPropertyChanged
     }
 
     public string GmailButtonText =>
-        GmailReady && !string.IsNullOrWhiteSpace(AccountEmail)
-            ? $"El correo fue vinculado a la cuenta: {AccountEmail}"
+        GmailReady
+            ? (string.IsNullOrWhiteSpace(AccountEmail)
+                ? "Cuenta de Google vinculada"
+                : $"El correo fue vinculado a la cuenta: {AccountEmail}")
             : "Agregar cuenta Gmail";
-
     public bool GmailReady
     {
         get => _gmailReady;
@@ -193,8 +194,8 @@ public class SendViewModel : INotifyPropertyChanged
         _templateService = templateService;
         _gmailService = gmailService;
         _gmailFactory = gmailFactory;
-        GmailReady = gmailService is not NullGmailService && GmailCredentialHelper.HasCredential();
-        GmailStatus = GmailReady ? "Credenciales listas" : "Faltan credenciales (client_secret.json)";
+        GmailReady = false;
+        GmailStatus = "Cuenta de Google no vinculada";
 
         SelectValidCommand = new RelayCommand(_ => SelectValidRecipients(), _ => Recipients.Any());
         DeselectAllCommand = new RelayCommand(_ => DeselectAll(), _ => Recipients.Any());
@@ -408,61 +409,69 @@ public class SendViewModel : INotifyPropertyChanged
 
     private async Task LoadCredentialAsync()
     {
-        var dlg = new Microsoft.Win32.OpenFileDialog
-        {
-            Filter = "JSON (*.json)|*.json|Todos los archivos|*.*",
-            Multiselect = false
-        };
-        if (dlg.ShowDialog() != true) return;
-
         try
         {
-            GmailCredentialHelper.CopyCredential(dlg.FileName);
-            GmailStatus = "Credenciales copiadas. Intentando inicializar...";
+            GmailStatus = "Abriendo Google para vincular la cuenta...";
+
+            await Services.Google.GoogleAuthService.Shared.InitializeAsync().ConfigureAwait(true);
 
             if (_gmailFactory != null)
             {
-                try
-                {
-                    _gmailService = _gmailFactory();
-                    GmailReady = _gmailService is not NullGmailService && GmailCredentialHelper.HasCredential();
-                    if (GmailReady)
-                    {
-                        AccountEmail = await _gmailService.GetAccountEmailAsync() ?? string.Empty;
-                    }
-                    GmailStatus = GmailReady ? "Credenciales listas" : "No se pudo inicializar Gmail.";
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(nameof(LoadCredentialAsync), ex);
-                    GmailReady = false;
-                    GmailStatus = "Error al inicializar Gmail. Reintente o reinicie.";
-                }
+                _gmailService = _gmailFactory();
             }
-            else
-            {
-                GmailStatus = "Credenciales copiadas. Reinicie la app para usarlas.";
-            }
+
+            await _gmailService.InitializeAsync().ConfigureAwait(true);
+
+            GmailReady = _gmailService is not NullGmailService;
+            GmailStatus = GmailReady
+                ? "Cuenta de Google vinculada"
+                : "No se pudo inicializar Gmail.";
         }
         catch (Exception ex)
         {
             Logger.LogError(nameof(LoadCredentialAsync), ex);
-            GmailStatus = "Error al copiar credenciales.";
+            GmailReady = false;
+            GmailStatus = $"ERROR: {ex.GetType().Name}: {ex.Message}";
         }
-
-        await Task.CompletedTask;
     }
 
     private async Task InitAccountEmailAsync()
     {
-        if (!GmailReady) return;
         try
         {
-            AccountEmail = await _gmailService.GetAccountEmailAsync() ?? string.Empty;
+            await _gmailService.InitializeAsync().ConfigureAwait(true);
+
+            // La autenticación funcionó.
+            GmailReady = true;
+            GmailStatus = "Cuenta de Google vinculada";
+
+            // Obtener el correo es opcional.
+            try
+            {
+                AccountEmail = await _gmailService.GetAccountEmailAsync()
+                    .ConfigureAwait(true)
+                    ?? string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(AccountEmail))
+                {
+                    GmailStatus = $"Cuenta vinculada: {AccountEmail}";
+                }
+            }
+            catch (Exception ex)
+            {
+                // No consideramos que Gmail esté desconectado
+                // solo porque no podamos obtener el email.
+                Logger.LogError(nameof(InitAccountEmailAsync), ex);
+                AccountEmail = string.Empty;
+            }
         }
         catch (Exception ex)
         {
             Logger.LogError(nameof(InitAccountEmailAsync), ex);
+
+            GmailReady = false;
+            AccountEmail = string.Empty;
+            GmailStatus = "Cuenta de Google no vinculada";
         }
     }
 
