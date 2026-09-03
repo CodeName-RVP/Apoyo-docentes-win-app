@@ -10,6 +10,8 @@ using AppParaUniversidad.Domain.Models;
 using AppParaUniversidad.Services.Directory;
 using AppParaUniversidad.Services.Email;
 using AppParaUniversidad.Services.Mail;
+using Google.Apis;
+using MimeKit;
 
 namespace AppParaUniversidad.ViewModels;
 
@@ -262,6 +264,10 @@ public class SendViewModel : INotifyPropertyChanged
         SaveToDirectoryCommand.RaiseCanExecuteChanged();
     }
 
+    public async Task RefreshContactsAsync()
+    {
+        await UpdateFromLoadsAsync(_cargas.Values.ToList());
+    }
     private void ApplySuggestion(object? param)
     {
         if (param is not DocenteDeliveryStatus r) return;
@@ -359,6 +365,28 @@ public class SendViewModel : INotifyPropertyChanged
         }
     }
 
+    private static string GetFriendlySendError(Exception ex)
+    {
+        return ex switch
+        {
+            ParseException => 
+                "Error: Verifica la dirección.",
+            FormatException => 
+                "Error: Correo inválido.",
+            Google.GoogleApiException googleEx when googleEx.HttpStatusCode == System.Net.HttpStatusCode.Unauthorized =>
+                "Error: No autorizado. Verifica tu cuenta de Google.",
+            Google.GoogleApiException googleEx when googleEx.HttpStatusCode == System.Net.HttpStatusCode.Forbidden =>
+                "Error: Acceso denegado. Verifica los permisos de tu cuenta de Google.",
+            Google.GoogleApiException googleEx when googleEx.HttpStatusCode == System.Net.HttpStatusCode.TooManyRequests =>
+                "Error: Demasiadas solicitudes. Intenta más tarde.",
+            System.Net.Http.HttpRequestException =>
+                "Error: Error de red. Verifica tu conexión a Internet.",
+            TaskCanceledException =>
+                "Error: La operación fue cancelada. Intenta nuevamente.",
+            _ => $"Error inesperado al enviar correo: {ex.GetType().Name}: {ex.Message}"
+        };
+    }
+
     private async Task SendAsync()
     {
         Logs.Clear();
@@ -373,6 +401,8 @@ public class SendViewModel : INotifyPropertyChanged
         {
             try
             {
+                r.Estado = "Enviando...";
+
                 if (!_cargas.TryGetValue(r.NombreNormalizado, out var carga))
                 {
                     Logs.Add(new SendLog(DateTime.UtcNow, r.NombreNormalizado, r.NombreVisible, r.Correo ?? string.Empty, "Skipped", "Sin carga"));
@@ -383,28 +413,75 @@ public class SendViewModel : INotifyPropertyChanged
                 var subject = $"Carga docente - {Ciclo}";
                 await _gmailService.SendAsync(r.Correo!, subject, html, CcEmail);
 
-                Logs.Add(new SendLog(DateTime.UtcNow, r.NombreNormalizado, r.NombreVisible, r.Correo!, "Sent", null));
+                r.Estado = "Enviado";
+
+                Logs.Add(new SendLog(
+                    DateTime.UtcNow, 
+                    r.NombreNormalizado, 
+                    r.NombreVisible, 
+                    r.Correo!, 
+                    "Sent", 
+                    null));
             }
             catch (Exception ex)
             {
                 Logger.LogError(nameof(SendAsync), ex);
-                Logs.Add(new SendLog(DateTime.UtcNow, r.NombreNormalizado, r.NombreVisible, r.Correo ?? string.Empty, "Failed", ex.Message));
+
+                r.Estado = GetFriendlySendError(ex);
+                
+                Logs.Add(new SendLog(
+                    DateTime.UtcNow, 
+                    r.NombreNormalizado, 
+                    r.NombreVisible, 
+                    r.Correo ?? string.Empty, 
+                    "Failed", 
+                    GetFriendlySendError(ex)));
             }
         }
 
         var sent = Logs.Count(l => l.Estado == "Sent");
         var failed = Logs.Count(l => l.Estado == "Failed");
         var skipped = Logs.Count(l => l.Estado == "Skipped");
-        Status = $"Envio finalizado. Exitos: {sent}, Fallos: {failed}, Skipped: {skipped}";
+        Status = $"Envío finalizado. Enviados: {sent}, errores: {failed}, omitidos: {skipped}.";
     }
 
     private static int ScoreSuggestion(string cargaNorm, string contactoNorm)
     {
-        var tokensCarga = cargaNorm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var tokensContacto = contactoNorm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var carga = NormalizeForSuggestion(cargaNorm);
+        var contacto = NormalizeForSuggestion(contactoNorm);
+
+        if (carga == contacto) return 0;
+
+        var tokensCarga = carga.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var tokensContacto = contacto.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
         var overlap = tokensCarga.Intersect(tokensContacto).Count();
-        var distance = StringSimilarity.LevenshteinDistance(cargaNorm, contactoNorm);
-        return distance - (overlap * 2);
+
+        var sortedCarga = string.Join(' ', tokensCarga.OrderBy(x => x));
+        var sortedContacto = string.Join(' ', tokensContacto.OrderBy(x => x));
+
+        var distance = StringSimilarity.LevenshteinDistance(sortedCarga, sortedContacto);
+
+        return distance - (overlap * 10);
+    }
+
+    private static string NormalizeForSuggestion(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+        var normalized = value
+            .Trim()
+            .ToLowerInvariant()
+            .Normalize(System.Text.NormalizationForm.FormD);
+
+        var chars = normalized
+            .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) 
+                != System.Globalization.UnicodeCategory.NonSpacingMark)
+                .ToArray();
+
+        return new string(chars)
+            .Normalize(System.Text.NormalizationForm.FormC)
+            .Replace("  ", " ");
     }
 
     private async Task LoadCredentialAsync()

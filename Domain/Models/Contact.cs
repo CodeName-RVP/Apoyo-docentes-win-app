@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -25,6 +26,22 @@ public class Contact : INotifyPropertyChanged
     public string? Telefono { get; set; }
     public bool Activo { get; set; }
     public string LastUpdatedUtc { get; set; } = string.Empty;
+
+    public string LastUpdatedDisplay
+    {
+        get
+        {
+            if (DateTime.TryParse(
+                LastUpdatedUtc, 
+                null,
+                System.Globalization.DateTimeStyles.RoundtripKind,
+                out var date))
+            {
+                return date.ToLocalTime().ToString("dd/MM/yyyy");
+            }
+            return string.Empty;
+        }
+    }
     private bool _selectedForDelete;
 
     public bool SelectedForDelete

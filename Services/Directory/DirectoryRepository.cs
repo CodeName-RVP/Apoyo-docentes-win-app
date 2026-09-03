@@ -72,7 +72,8 @@ public sealed class DirectoryRepository : IDirectoryRepository
             nombreNormalizado: normalized,
             correo: contact.Correo,
             telefono: contact.Telefono,
-            activo: contact.Activo);
+            activo: contact.Activo,
+            lastUpdatedUtc: DateTime.UtcNow.ToString("O"));
 
         EnsureFolder();
         await using var connection = new SqliteConnection(ConnectionString);

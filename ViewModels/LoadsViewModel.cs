@@ -16,7 +16,6 @@ public class LoadsViewModel : INotifyPropertyChanged
 {
     private readonly IExcelReader _excelReader;
     private readonly AsyncRelayCommand _analyzeCommand;
-    private readonly RelayCommand _groupCommand;
     private readonly ITeachingLoadBuilder _teachingLoadBuilder;
     private string? _selectedSheet;
     private string? _excelPath;
@@ -29,7 +28,6 @@ public class LoadsViewModel : INotifyPropertyChanged
 
     public ICommand OpenFileCommand { get; }
     public ICommand AnalyzeCommand => _analyzeCommand;
-    public ICommand GroupCommand => _groupCommand;
 
     public event Action<IReadOnlyList<DocenteCarga>>? GroupedUpdated;
 
@@ -80,7 +78,6 @@ public class LoadsViewModel : INotifyPropertyChanged
         _teachingLoadBuilder = teachingLoadBuilder;
         OpenFileCommand = new RelayCommand(_ => OpenFile());
         _analyzeCommand = new AsyncRelayCommand(AnalyzeAsync, CanAnalyze);
-        _groupCommand = new RelayCommand(_ => RebuildGroups(), _ => CurrentRows.Any());
     }
 
     private void OpenFile()
@@ -156,7 +153,6 @@ public class LoadsViewModel : INotifyPropertyChanged
         {
             GroupedLoads.Add(carga);
         }
-        _groupCommand.RaiseCanExecuteChanged();
         GroupedUpdated?.Invoke(GroupedLoads.ToList());
     }
 

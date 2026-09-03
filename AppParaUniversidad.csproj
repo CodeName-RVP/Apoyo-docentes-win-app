@@ -9,7 +9,7 @@
 
     <AssemblyName>ApoyoDocentes</AssemblyName>
     <Product>Apoyo Docentes</Product>
-    <Version>1.1.0</Version>
+    <Version>1.3.0</Version>
 
     <!-- Publicación para Windows -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

@@ -1,123 +1,209 @@
 # Apoyo Docentes - Windows App
 
-Aplicacion de escritorio (WPF, .NET 8) para automatizar cargas horarias docentes, directorio de contactos, envio de correos y consulta de horarios.
+Aplicación de escritorio para Windows (WPF, .NET 8) orientada a la gestión de cargas horarias docentes, directorio de contactos, envío de correos y consulta de horarios.
 
 ## Funcionalidades principales
 
-- Carga de Excel con tabla general.
-- Generacion de cargas por docente.
-- Directorio de contactos local (SQLite).
-- Envio de correos mediante Gmail API.
+- Carga de archivos Excel con información de cargas horarias.
+- Generación de cargas por docente.
+- Directorio local de contactos mediante SQLite.
+- Envío de correos mediante Gmail API.
 - Lectura de horarios desde Google Sheets.
+- Selección de hojas de cálculo desde la aplicación.
 - Tema claro/oscuro.
+- Autenticación de Google mediante OAuth 2.0.
+- Persistencia local de la autorización de Google mediante almacenamiento protegido por DPAPI de Windows.
+- Registro local de errores para diagnóstico.
+- Verificación de actualizaciones de la aplicación.
 
-## Instalacion y ejecucion
+## Instalación para usuarios finales
 
-Requisitos: Windows 10 u 11.
+### Requisitos
 
-1. Descarga el paquete de *releases*, por ejemplo `ApoyoDocentes-v1.0.0-win-x64.zip`.
-2. Descomprime el archivo.
+- Windows 10 u 11 de 64 bits.
+- Una cuenta de Google si deseas utilizar Gmail o Google Sheets.
+- Acceso a Internet durante la vinculación inicial de Google.
+
+### Instalación
+
+1. Descarga el archivo `.zip` correspondiente desde **Releases**.
+2. Descomprime el archivo en una carpeta de tu elección.
 3. Ejecuta `ApoyoDocentes.exe`.
-4. Completa la configuracion de Google descrita a continuacion si usaras correo o Google Sheets.
+4. No necesitas instalar .NET por separado si utilizas el paquete publicado por el proyecto.
 
-## Vincular Google: guia paso a paso
+> **Importante:** los usuarios finales **no necesitan descargar, crear ni copiar `client_secret.json`**. La aplicación publicada contiene la configuración necesaria para iniciar el flujo OAuth.
+>
+> Tampoco necesitas crear un proyecto de Google Cloud para utilizar la versión publicada.
 
-La aplicacion usa OAuth 2.0. Cada persona autoriza su propia cuenta de Google: la aplicacion **no solicita ni almacena la contrasena** de Gmail.
+## Vincular una cuenta de Google
 
-Al usarla se solicitan exclusivamente estos permisos:
+La aplicación utiliza **OAuth 2.0**. Cada usuario autoriza su propia cuenta de Google desde el navegador.
 
-| Funcion | Permiso solicitado |
+La aplicación no solicita la contraseña de Google ni necesita que la introduzcas dentro de Apoyo Docentes.
+
+Para vincular la cuenta:
+
+1. Abre **Configuración** dentro de Apoyo Docentes.
+2. Pulsa **Agregar cuenta Gmail** o la opción equivalente para vincular Google.
+3. Se abrirá el navegador con la página oficial de Google.
+4. Inicia sesión con la cuenta que deseas utilizar.
+5. Revisa los permisos solicitados y confirma la autorización.
+6. Regresa a Apoyo Docentes. La cuenta deberá aparecer como vinculada.
+
+La autorización normalmente solo necesita realizarse una vez. Puede ser necesario autorizar nuevamente si revocas el acceso, eliminas la autorización local o Google solicita una nueva autorización.
+
+### Permisos utilizados
+
+| Función | Permiso |
 | --- | --- |
-| Enviar correos | `https://www.googleapis.com/auth/gmail.send` |
-| Leer hojas de calculo | `https://www.googleapis.com/auth/spreadsheets.readonly` |
+| Enviar correos desde Gmail | `gmail.send` |
+| Leer hojas de cálculo de Google | `spreadsheets.readonly` |
 
-> Importante: esta version lee contenido de **Google Sheets**. Aunque la hoja este guardada en Google Drive, no descarga ni explora archivos arbitrarios de Drive y no requiere habilitar Google Drive API.
+La aplicación no solicita acceso completo a Gmail ni acceso general a Google Drive.
 
-### 1. Crear o seleccionar un proyecto de Google Cloud
+> Aunque una hoja de cálculo pueda estar almacenada en Google Drive, la aplicación utiliza Google Sheets API para acceder a la hoja seleccionada.
 
-1. Ingresa a [Google Cloud Console](https://console.cloud.google.com/).
-2. En el selector de proyectos, crea un proyecto o selecciona el proyecto institucional que administrara esta integracion.
-3. Usa un proyecto dedicado a esta aplicacion; no reutilices uno de produccion que pertenezca a otro sistema.
+Para conocer con mayor detalle cómo se manejan los datos y la autorización de Google, consulta la [Política de Privacidad](privacy.md).
 
-### 2. Habilitar las APIs necesarias
+## Cargar cargas horarias desde Excel
 
-1. En Google Cloud Console abre **APIs y servicios > Biblioteca**.
-2. Busca **Gmail API**, abrela y pulsa **Habilitar**.
-3. Busca **Google Sheets API**, abrela y pulsa **Habilitar**.
+La aplicación permite cargar un archivo Excel que contenga la información general de las cargas horarias.
 
-No habilites Google Drive API para la funcionalidad actual: no es necesaria.
+El archivo se procesa localmente para generar la información necesaria para las vistas de cargas y envío.
 
-### 3. Configurar la pantalla de consentimiento OAuth
+Después de cargar el archivo:
 
-1. Abre **Google Auth platform** y completa las secciones de configuracion de OAuth (Branding, Audience y Data Access).
-2. Define un nombre reconocible, por ejemplo `Apoyo Docentes`, y un correo de soporte administrado por la institucion.
-3. En **Audience**, selecciona **Internal** si todos los usuarios pertenecen al mismo Google Workspace institucional. Selecciona **External** si tambien se autorizaran cuentas ajenas a ese dominio.
-4. En **Data Access**, agrega solamente los dos permisos indicados arriba: `gmail.send` y `spreadsheets.readonly`.
-5. Si la aplicacion esta en modo de prueba, agrega las cuentas que podran autorizarla como usuarios de prueba.
-6. Guarda los cambios.
+1. Selecciona el archivo Excel.
+2. Espera a que termine el procesamiento.
+3. Revisa la información cargada.
+4. Selecciona la información correspondiente al período que deseas utilizar.
+5. Continúa con las funciones disponibles en la aplicación.
 
-### 4. Crear la credencial para aplicacion de escritorio
+## Directorio de contactos
 
-1. En **Google Auth platform > Clients**, selecciona **Create client**.
-2. En tipo de aplicacion elige **Desktop app**.
-3. Escribe un nombre, por ejemplo `Apoyo Docentes Windows`.
-4. Pulsa **Create** y descarga el archivo JSON de la credencial.
-5. Conserva el nombre `client_secret.json`. No lo subas a GitHub ni lo compartas en canales publicos.
+Apoyo Docentes incluye un directorio local de contactos.
 
-### 5. Registrar la credencial en Apoyo Docentes
+Los contactos pueden incluir:
 
-1. Abre la aplicacion y entra a **Configuracion**.
-2. Selecciona la opcion para vincular o cargar `client_secret.json` y elige el archivo descargado.
-3. La aplicacion lo copiara en `%AppData%\AppParaUniversidad\client_secret.json`.
-4. Al enviar un correo o cargar una hoja de Google por primera vez, se abrira el navegador para iniciar sesion.
-5. Inicia sesion con la cuenta que utilizaras y revisa los permisos solicitados.
-6. Pulsa **Permitir**. Regresa a la aplicacion al terminar la autorizacion.
+- Nombre del docente.
+- Correo electrónico.
+- Teléfono.
+- Estado del contacto.
 
-La autorizacion de Gmail y la de Sheets pueden mostrarse por separado la primera vez que se use cada funcion; esto es normal porque tienen permisos distintos.
+El directorio permite agregar, modificar, seleccionar y eliminar contactos.
 
-### 6. Enviar correos desde Gmail
+La aplicación también registra la fecha de última actualización de cada contacto.
 
-1. Vincula la cuenta siguiendo los pasos anteriores.
-2. En la vista de envio, confirma que se muestra la cuenta vinculada.
-3. Selecciona los docentes destinatarios y revisa la vista previa.
-4. Envia los correos. Gmail los enviara desde la cuenta que autorizo el acceso.
+Los cambios realizados en el directorio se reflejan en la información utilizada por la vista de envío.
 
-No utilices una clave de API para esta funcion: una clave de API no sustituye la autorizacion OAuth para enviar correo desde una cuenta de Gmail.
+## Enviar correos desde Gmail
 
-### 7. Leer una hoja guardada en Google Drive
+1. Vincula tu cuenta de Google desde **Configuración**.
+2. Carga la información de las cargas horarias.
+3. Abre la vista de envío.
+4. Confirma que la cuenta aparece como vinculada.
+5. Selecciona los docentes destinatarios.
+6. Revisa las direcciones de correo y la información mostrada.
+7. Envía los correos.
 
-1. En Google Drive, abre la hoja de calculo de Google que contiene los horarios o contactos.
-2. Confirma que la cuenta autorizada en la aplicacion tiene, como minimo, permiso de **Lector** sobre esa hoja.
-3. Copia el ID de la hoja desde su URL. En una direccion como `https://docs.google.com/spreadsheets/d/ID_DE_LA_HOJA/edit`, copia el texto entre `/d/` y `/edit`.
-4. En la vista de horarios, elige **Google Sheets** como origen.
-5. Pega el ID en el campo **ID Sheet** y pulsa **Cargar hojas**.
-6. Selecciona la pestana (hoja) que deseas utilizar y continua con la carga.
-7. Si usaras esa hoja con frecuencia, guardala con un alias desde la misma vista.
+Los mensajes se envían utilizando la API oficial de Gmail desde la cuenta de Google autorizada.
 
-Si la hoja no aparece o falla la carga, verifica que se trate de una hoja de calculo de Google, que el ID sea correcto y que la cuenta autorizada tenga acceso. Los permisos de Google Cloud no reemplazan los permisos de uso compartido de la hoja en Drive.
+Durante el envío, la aplicación muestra el estado de cada destinatario y puede informar errores específicos, por ejemplo:
 
-## Seguridad y datos locales
+- Correo no válido.
+- Credenciales de Google no válidas.
+- Sin permisos para enviar correos.
+- Límite de envíos de Google alcanzado.
+- Error de conexión con Google.
+- Operación cancelada o con tiempo de espera excedido.
 
-- `%AppData%\AppParaUniversidad\app.db`: directorio y datos locales de la aplicacion.
-- `%AppData%\AppParaUniversidad\client_secret.json`: configuracion del cliente OAuth.
-- `%AppData%\AppParaUniversidad\tokens`: autorizacion para Gmail, cifrada mediante DPAPI para el usuario actual de Windows.
-- `%AppData%\AppParaUniversidad\tokens_sheets`: autorizacion para Google Sheets, cifrada mediante DPAPI para el usuario actual de Windows.
+## Leer horarios desde Google Sheets
 
-No copies estas carpetas a equipos compartidos ni las incluyas en repositorios, copias publicas o tickets de soporte. Para retirar acceso, revoca el permiso de la aplicacion desde la cuenta de Google y elimina las carpetas de tokens locales; al volver a usar la funcion se solicitara autorizacion otra vez.
+1. Abre en Google Sheets la hoja que contiene los horarios.
+2. Comprueba que la cuenta de Google vinculada en Apoyo Docentes tenga permiso de **Lector** sobre esa hoja.
+3. Copia el ID de la hoja desde su URL.
 
-Las actualizaciones automaticas solo aceptan assets de GitHub que publiquen un digest `sha256`. La aplicacion verifica ese hash tras la descarga y antes de abrir un instalador o reemplazar archivos.
+En una URL con la estructura:
+
+`docs.google.com/spreadsheets/d/ID_DE_LA_HOJA/edit`
+
+el ID es el texto situado entre `/d/` y `/edit`.
+
+4. En la vista de horarios selecciona **Google Sheets** como origen.
+5. Introduce el **ID Sheet**.
+6. Pulsa **Cargar hojas**.
+7. Selecciona la pestaña que deseas utilizar.
+
+Si una hoja no aparece, comprueba que el ID sea correcto y que la cuenta vinculada tenga acceso a ella.
+
+> El permiso OAuth de Google Sheets y el permiso de uso compartido de la hoja son cosas diferentes. La cuenta debe tener acceso a la hoja además de haber autorizado la aplicación.
+
+## Solución de problemas
+
+### El navegador no se abre al vincular Google
+
+- Comprueba que tienes un navegador predeterminado configurado en Windows.
+- Comprueba que tienes conexión a Internet.
+- Cierra Apoyo Docentes y vuelve a intentar la vinculación desde **Configuración**.
+- Si el problema persiste, abre el registro de errores desde **Configuración**.
+
+### Google indica que la aplicación no está disponible para mi cuenta
+
+La disponibilidad depende de la configuración y del estado de publicación/verificación del proyecto OAuth en Google.
+
+Si la aplicación se encuentra temporalmente en modo de pruebas, solamente las cuentas registradas como usuarios de prueba podrán autorizarla.
+
+Esto puede ser una limitación de la configuración del proyecto OAuth y no necesariamente un problema con la cuenta de Google.
+
+### La cuenta aparece vinculada pero no puedo enviar correos
+
+Comprueba:
+
+- Que la cuenta correcta esté vinculada.
+- Que la autorización de Gmail haya sido aceptada.
+- Que la cuenta no haya revocado el acceso de la aplicación.
+- Que la dirección del destinatario sea válida.
+
+Si el problema continúa, puedes revisar el mensaje mostrado en la columna **Estado** y consultar el registro de errores desde **Configuración**.
+
+### Google Sheets no carga una hoja
+
+Comprueba:
+
+- Que el ID de la hoja sea correcto.
+- Que la hoja sea accesible con la cuenta vinculada.
+- Que la cuenta tenga como mínimo permiso de **Lector**.
+- Que la pestaña seleccionada exista.
+
+## Privacidad
+
+Apoyo Docentes utiliza las APIs oficiales de Google únicamente para las funciones que requieren integración con Gmail y Google Sheets.
+
+La aplicación utiliza OAuth 2.0 y almacena localmente la autorización necesaria para las funciones de Google.
+
+Para consultar la información completa sobre datos, permisos, almacenamiento local, seguridad y revocación de acceso:
+
+**[Ver Política de Privacidad](privacy.md)**
 
 ## Desarrollo
 
-1. Abre la solucion en Visual Studio o VS Code.
-2. Compila en configuracion Debug o Release.
-3. Ejecuta el proyecto principal.
+### Requisitos para compilar desde el código fuente
 
-## Referencias oficiales
+- Windows 10 u 11 de 64 bits.
+- .NET 8 SDK.
+- Visual Studio o VS Code.
+- Credenciales OAuth de un cliente de tipo **Desktop app** configuradas para el proyecto de desarrollo.
 
-- [Habilitar APIs de Google Workspace](https://developers.google.com/workspace/guides/enable-apis)
-- [Crear credenciales OAuth de escritorio](https://developers.google.com/workspace/guides/create-credentials)
+Los secretos de desarrollo no deben guardarse directamente en el código fuente.
 
-## Imagenes
+Crea un archivo local llamado `GoogleOAuth.local.props` en la raíz del proyecto. Este archivo está excluido de Git mediante `.gitignore`.
 
-![Pantalla principal](docs/images/pantalla-principal.png)
+Ejemplo:
+
+```xml
+<Project>
+  <PropertyGroup>
+    <GoogleClientId>TU_CLIENT_ID</GoogleClientId>
+    <GoogleClientSecret>TU_CLIENT_SECRET</GoogleClientSecret>
+  </PropertyGroup>
+</Project>

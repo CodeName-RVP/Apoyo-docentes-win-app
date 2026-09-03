@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -32,6 +33,7 @@ public class SettingsViewModel : INotifyPropertyChanged
     public ICommand ToggleThemeCommand { get; }
     public ICommand LoadCredentialCommand => _sendViewModel.LoadCredentialCommand;
     public ICommand CheckUpdatesCommand { get; }
+    public ICommand OpenLogCommand { get; }
 
     public bool GmailReady => _sendViewModel.GmailReady;
     public string GmailStatus => _sendViewModel.GmailStatus;
@@ -147,6 +149,7 @@ public class SettingsViewModel : INotifyPropertyChanged
         ApplySizeCommand = new RelayCommand(_ => ApplySize());
         ToggleThemeCommand = new RelayCommand(_ => ApplyTheme());
         CheckUpdatesCommand = new AsyncRelayCommand(ExecuteUpdateActionAsync, () => !_isUpdating);
+        OpenLogCommand = new RelayCommand(_ => OpenLog());
 
         if (UpdateCheckState.HasChecked)
         {
@@ -317,6 +320,43 @@ public class SettingsViewModel : INotifyPropertyChanged
         UpdateCheckState.Release = result.Release;
     }
 
+    private void OpenLog()
+    {
+        try
+        {
+            var path = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "AppParaUniversidad",
+                "app.log");
+
+            if (!File.Exists(path))
+            {
+                MessageBox.Show(
+                    "No se encontró el archivo de log.",
+                    "Abrir log",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                return;
+            }
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = path,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(nameof(OpenLog), ex);
+
+            MessageBox.Show(
+                "No se pudo abrir el archivo de log.",
+                "Abrir log",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+    }
     private static void OpenUrl(string? url)
     {
         if (string.IsNullOrWhiteSpace(url))

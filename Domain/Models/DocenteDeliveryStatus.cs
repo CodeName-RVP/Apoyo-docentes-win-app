@@ -9,6 +9,7 @@ public class DocenteDeliveryStatus : INotifyPropertyChanged
     private string _correo = string.Empty;
     private bool _tieneCorreo;
     private bool _enviar;
+    private string _estado = string.Empty;
     private IReadOnlyList<string> _sugerencias = new List<string>();
     private IReadOnlyList<string> _correosDisponibles = new List<string>();
 
@@ -76,6 +77,19 @@ public class DocenteDeliveryStatus : INotifyPropertyChanged
             if (_enviar != value)
             {
                 _enviar = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public string Estado
+    {
+        get => _estado;
+        set
+        {
+            if (_estado != value)
+            {
+                _estado = value;
                 OnPropertyChanged();
             }
         }
