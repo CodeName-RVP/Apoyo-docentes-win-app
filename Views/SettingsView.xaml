@@ -7,6 +7,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -77,6 +78,33 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="4"
+                Background="{DynamicResource CardBrush}"
+                Padding="10"
+                CornerRadius="8"
+                BorderBrush="{DynamicResource BorderBrushLight}"
+                BorderThickness="1"
+                Margin="0,8,0,0">
+
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center">
+
+                <Button Content="Abrir registro"
+                        Command="{Binding OpenLogCommand}"
+                        Margin="0,0,16,0"
+                        VerticalAlignment="Center" />
+
+                <StackPanel>
+                    <TextBlock Text="Registro de errores"
+                               FontWeight="SemiBold" />
+
+                    <TextBlock Text="Abrir el archivo app.log para diagnosticar problemas."
+                               Margin="0,4,0,0"
+                               Foreground="{DynamicResource TextBrush}" />
+                </StackPanel>
             </StackPanel>
         </Border>
     </Grid>

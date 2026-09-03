@@ -1,50 +1,145 @@
-Apoyo Docentes - Windows App
-Aplicacion de escritorio (WPF, .NET 8) para automatizar cargas horarias docentes, directorio de contactos, envio de correos y consulta de horarios.
-Windows 10/11
+Apoyo Docentes - Windows App v1.3.0
+==================================
 
-Pasos:
-Descargar el .zip desde GitHub.
-Descomprimirlo.
-Ejecutar ApoyoDocentes.exe.
-Si se usara Gmail o Google Sheets, vincular el archivo client_secret.json desde la app.
-Para Plataformas
-Windows 10/11
+Aplicación de escritorio para Windows que permite gestionar cargas horarias
+docentes, directorios de contactos, envío de correos y consulta de horarios.
 
-Funcionalidades principales:
-Carga de Excel con tabla general
-Generacion de cargas por docente
-Directorio de contactos (SQLite)
-Envio de correos usando (Gmail API)
-Horarios docente desde Google Sheets
-Tema claro/oscuro
+Requisitos
+----------
+- Windows 10 o Windows 11
+- No es necesario instalar .NET por separado.
+- Para utilizar Gmail o Google Sheets se necesita una cuenta de Google.
 
-Google APIs (Gmail + Sheets)
-Estas APIs deben habilitarse manualmente en Google Cloud. No se pueden activar automaticamente desde la app.
-1) Crear proyecto en Google Cloud
-Ve a Google Cloud Console.
-Crea un proyecto nuevo (o usa uno existente).
-2) Habilitar APIs
 
-En el proyecto:
-Habilita Gmail API
-Habilita Google Sheets API
-3) Configurar pantalla de consentimiento (OAuth)
-En "OAuth consent screen" selecciona tipo External (o Internal si es cuenta institucional).
-Completa nombre de la app y correo de soporte.
+INSTALACIÓN
+-----------
 
-Agrega los scopes:
-Gmail: https://www.googleapis.com/auth/gmail.send
-Sheets: https://www.googleapis.com/auth/spreadsheets.readonly
-Agrega los usuarios de prueba (si aplica).
-4) Crear credenciales OAuth
-Ve a "Credentials" ? "Create Credentials" ? "OAuth client ID".
-Tipo de aplicacion: Desktop app.
-Descarga el archivo JSON (client_secret.json).
-5) Vincular la cuenta en la app
-Abre la app ? Configuracion ? Vincular cuenta Gmail.
-Selecciona el archivo client_secret.json.
-Se abrira el navegador para autorizar.
+1. Descarga el archivo ZIP de la versión correspondiente.
+2. Descomprime el ZIP en una carpeta de tu elección.
+3. Ejecuta "ApoyoDocentes.exe".
 
-Notas
-El archivo de base de datos se guarda en %AppData%\AppParaUniversidad\app.db
-Las credenciales de Google se configuran desde la app
+No es necesario ejecutar un instalador.
+
+
+PRIMER USO DE GOOGLE
+--------------------
+
+Para utilizar las funciones de Gmail o Google Sheets:
+
+1. Abre la aplicación.
+2. Ve a "Configuración".
+3. Selecciona "Agregar cuenta Gmail".
+4. Se abrirá una ventana del navegador con Google.
+5. Inicia sesión con la cuenta que deseas utilizar.
+6. Revisa y acepta los permisos solicitados por la aplicación.
+7. Regresa a la aplicación.
+
+Una vez completada la autorización, la cuenta quedará vinculada.
+
+No necesitas descargar ni proporcionar un archivo "client_secret.json".
+
+Tampoco necesitas configurar manualmente un proyecto en Google Cloud.
+
+
+FUNCIONES PRINCIPALES
+---------------------
+
+- Carga de archivos Excel con la tabla general.
+- Generación de cargas por docente.
+- Directorio de contactos.
+- Almacenamiento local de contactos mediante SQLite.
+- Envío de correos mediante Gmail.
+- Consulta de horarios mediante Google Sheets.
+- Tema claro y oscuro.
+
+
+GOOGLE GMAIL Y GOOGLE SHEETS
+----------------------------
+
+La aplicación utiliza OAuth 2.0 para solicitar autorización directamente a
+Google.
+
+La aplicación solicita únicamente los permisos necesarios para sus funciones:
+
+- Gmail: envío de correos.
+- Google Sheets: lectura de hojas de cálculo.
+
+La contraseña de tu cuenta de Google nunca se proporciona a la aplicación.
+
+Si Google muestra una pantalla de advertencia durante la autorización,
+revisa que la aplicación y los permisos solicitados sean los esperados antes
+de continuar.
+
+
+DATOS LOCALES
+-------------
+
+La aplicación almacena sus datos locales en:
+
+%AppData%\AppParaUniversidad\
+
+La base de datos local se encuentra en:
+
+%AppData%\AppParaUniversidad\app.db
+
+Las credenciales OAuth utilizadas para mantener la sesión de Google se
+almacenan localmente y se protegen mediante las funciones de seguridad de
+Windows.
+
+No compartas manualmente la carpeta de datos de la aplicación con otras
+personas.
+
+
+SOLUCIÓN DE PROBLEMAS
+---------------------
+
+Google no aparece al seleccionar "Agregar cuenta Gmail"
+--------------------------------------------------------
+
+Comprueba que:
+
+- Tienes conexión a Internet.
+- Estás utilizando una versión reciente de la aplicación.
+- No existe otra ventana del navegador esperando una autorización.
+
+Si el problema continúa, cierra y vuelve a abrir la aplicación.
+
+
+La cuenta aparece como no vinculada
+-----------------------------------
+
+Ve a:
+
+Configuración → Agregar cuenta Gmail
+
+y vuelve a realizar el proceso de autorización.
+
+
+No puedo enviar correos
+-----------------------
+
+Comprueba primero que:
+
+- La cuenta de Google aparece como vinculada.
+- Los destinatarios tienen una dirección de correo válida.
+- La aplicación tiene conexión a Internet.
+
+
+SEGURIDAD
+---------
+
+Apoyo Docentes utiliza OAuth 2.0 para la autenticación con Google.
+
+La aplicación no solicita ni almacena la contraseña de Google.
+
+Los tokens de autenticación se almacenan localmente y se protegen mediante
+DPAPI (Data Protection API) de Windows.
+
+
+INFORMACIÓN
+-----------
+
+Versión: 1.3.0
+Plataforma: Windows 10/11
+Arquitectura: x64
+Framework: .NET 8

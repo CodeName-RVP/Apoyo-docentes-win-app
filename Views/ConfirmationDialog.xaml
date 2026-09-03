@@ -1,0 +1,58 @@
+<Window x:Class="AppParaUniversidad.Views.ConfirmationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Confirmar eliminación"
+        Width="420"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="⚠️ Eliminar todos los contactos"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   Margin="0,0,0,12"/>
+
+        <TextBlock Grid.Row="1"
+                   Text="Esta acción eliminará todos los contactos del directorio y no se puede deshacer."
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,16"/>
+
+        <StackPanel Grid.Row="2">
+            <TextBlock Text="Para confirmar, escribe exactamente:"
+                       Margin="0,0,0,6"/>
+
+            <TextBlock Text="ELIMINAR TODOS"
+                       FontWeight="Bold"
+                       Margin="0,0,0,8"/>
+
+            <TextBox x:Name="ConfirmationTextBox"
+                     MinWidth="300"
+                     Margin="0,0,0,16"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right">
+
+            <Button Content="Cancelar"
+                    Click="Cancel_Click"
+                    Margin="0,0,8,0"
+                    Padding="14,6"/>
+
+            <Button x:Name="ConfirmButton"
+                    Content="Eliminar todos"
+                    Click="Confirm_Click"
+                    IsEnabled="False"
+                    Padding="14,6"/>
+        </StackPanel>
+    </Grid>
+</Window>

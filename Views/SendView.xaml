@@ -88,7 +88,45 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridCheckBoxColumn Binding="{Binding TieneCorreo}" Header="Correo listo" IsReadOnly="True" />
+
+                    <DataGridTemplateColumn Header="Estado">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Estado}"
+                                        FontWeight="SemiBold"
+                                        TextWrapping="Wrap"
+                                        VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground"
+                                                    Value="{DynamicResource TextBrush}" />
+
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Estado}"
+                                                            Value="Enviado">
+                                                    <Setter Property="Foreground"
+                                                            Value="{DynamicResource SuccessBrush}" />
+                                                </DataTrigger>
+
+                                                <DataTrigger Binding="{Binding Estado}"
+                                                            Value="Enviando...">
+                                                    <Setter Property="Foreground"
+                                                            Value="#CA8A04" />
+                                                </DataTrigger>
+
+                                                <DataTrigger Binding="{Binding Estado}"
+                                                            Value="Error">
+                                                    <Setter Property="Foreground"
+                                                            Value="#DC2626" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
                     <DataGridTemplateColumn Header="Mejor sugerencia">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

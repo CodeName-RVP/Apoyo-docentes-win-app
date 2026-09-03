@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private readonly IDirectoryRepository _directoryRepository;
     private readonly SendViewModel _sendViewModel;
     private readonly LoadsViewModel _loadsViewModel;
+    private readonly DirectoryViewModel _directoryViewModel;
     private readonly ImportExportViewModel _importExportViewModel;
     private readonly IEmailTemplateService _emailTemplateService;
     private readonly IGmailService _gmailService;
@@ -39,13 +40,15 @@ public partial class MainWindow : Window
         _settings = _settingsService.Load();
         _sendViewModel = new SendViewModel(_directoryRepository, _emailTemplateService, _gmailService, CreateGmailService);
         _loadsViewModel = new LoadsViewModel(_excelReader, _teachingLoadBuilder);
+        _directoryViewModel = new DirectoryViewModel(_directoryRepository);
         _importExportViewModel = new ImportExportViewModel(_directoryRepository, new JsonExportService(), _sendViewModel);
         _settingsViewModel = new SettingsViewModel(_settingsService, ApplyWindowSize, _sendViewModel);
 
         _loadsViewModel.GroupedUpdated += loads => _ = SafeUpdateSendView(loads);
+        _directoryViewModel.ContactsChanged += (_, _) => _ = _sendViewModel.RefreshContactsAsync();
 
         LoadsViewControl.DataContext = _loadsViewModel;
-        DirectoryViewControl.DataContext = new DirectoryViewModel(_directoryRepository);
+        DirectoryViewControl.DataContext = _directoryViewModel;
         SendViewControl.DataContext = _sendViewModel;
         ImportExportViewControl.DataContext = _importExportViewModel;
         SettingsViewControl.DataContext = _settingsViewModel;

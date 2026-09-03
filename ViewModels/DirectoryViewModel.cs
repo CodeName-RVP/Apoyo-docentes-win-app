@@ -21,7 +21,7 @@ public class DirectoryViewModel : INotifyPropertyChanged
     private bool _activo = true;
     private string _status = "Listo";
     private string _lastUpdated = string.Empty;
-
+    private bool _updatingSelectAll;
     public ObservableCollection<Contact> Contacts { get; } = new();
 
     public bool SelectAll
@@ -29,13 +29,27 @@ public class DirectoryViewModel : INotifyPropertyChanged
         get => Contacts.Count > 0 && Contacts.All(c => c.SelectedForDelete);
         set
         {
-            foreach (var contact in Contacts)
+            _updatingSelectAll = true;
+
+            try
             {
-                contact.SelectedForDelete = value;
+                foreach (var contact in Contacts)
+                {
+                    contact.SelectedForDelete = value;
+                }
             }
+            finally
+            {
+                _updatingSelectAll = false;
+            }
+
             OnPropertyChanged();
+            OnPropertyChanged(nameof(CanEditContacts));
+            RaiseCanExecute();
         }
     }
+
+    public bool CanEditContacts => !SelectAll;
 
     public string Status
     {
@@ -54,13 +68,15 @@ public class DirectoryViewModel : INotifyPropertyChanged
     public ICommand SaveCommand { get; }
     public ICommand NewCommand { get; }
     public ICommand DeleteCommand { get; }
+    public event EventHandler? ContactsChanged;
+    public event Func<Task<bool>>? ConfirmDeleteAllRequested;
 
     public DirectoryViewModel(IDirectoryRepository repository)
     {
         _repository = repository;
         _repository.InitializeAsync().GetAwaiter().GetResult();
 
-        RefreshCommand = new AsyncRelayCommand(LoadAsync);
+        RefreshCommand = new AsyncRelayCommand(LoadAsync, () => CanEditContacts);
         SaveCommand = new AsyncRelayCommand(SaveAsync, CanSave);
         NewCommand = new RelayCommand(_ => ClearForm());
         DeleteCommand = new AsyncRelayCommand(DeleteAsync);
@@ -178,9 +194,11 @@ public class DirectoryViewModel : INotifyPropertyChanged
 
     private void OnContactPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(Contact.SelectedForDelete))
+        if (e.PropertyName == nameof(Contact.SelectedForDelete) && !_updatingSelectAll)
         {
             OnPropertyChanged(nameof(SelectAll));
+            OnPropertyChanged(nameof(CanEditContacts));
+            RaiseCanExecute();
         }
     }
 
@@ -207,7 +225,9 @@ public class DirectoryViewModel : INotifyPropertyChanged
     }
 
     private bool CanSave() =>
-        !string.IsNullOrWhiteSpace(NombreVisible) && !string.IsNullOrWhiteSpace(Correo);
+        !SelectAll &&
+        !string.IsNullOrWhiteSpace(NombreVisible) &&
+        !string.IsNullOrWhiteSpace(Correo);
 
     private async Task SaveAsync()
     {
@@ -227,6 +247,9 @@ public class DirectoryViewModel : INotifyPropertyChanged
             await _repository.UpsertAsync(contact);
             Status = "Guardado";
             await LoadAsync();
+            ClearForm();
+
+            ContactsChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
@@ -246,6 +269,19 @@ public class DirectoryViewModel : INotifyPropertyChanged
                 return;
             }
 
+            if (selected.Count == Contacts.Count)
+            {
+                if (ConfirmDeleteAllRequested is not null)
+                {
+                    var confirmed = await ConfirmDeleteAllRequested.Invoke();
+                    if (!confirmed)
+                    {
+                        Status = "Eliminación cancelada";
+                        return;
+                    }
+                }
+            }
+
             foreach (var contact in selected)
             {
                 await _repository.DeleteAsync(contact.NombreNormalizado);
@@ -254,6 +290,8 @@ public class DirectoryViewModel : INotifyPropertyChanged
             ClearForm();
             Status = "Eliminados";
             await LoadAsync();
+
+            ContactsChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
@@ -264,8 +302,11 @@ public class DirectoryViewModel : INotifyPropertyChanged
 
     private void RaiseCanExecute()
     {
-        if (SaveCommand is AsyncRelayCommand asc) asc.RaiseCanExecuteChanged();
-        if (DeleteCommand is AsyncRelayCommand adc) adc.RaiseCanExecuteChanged();
+        if (SaveCommand is AsyncRelayCommand saveCommand)
+            saveCommand.RaiseCanExecuteChanged();
+
+        if (RefreshCommand is AsyncRelayCommand refreshCommand)
+            refreshCommand.RaiseCanExecuteChanged();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
